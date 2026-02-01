@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibras Positivas - App de Ventas</title>
+    <title>Vibras Positivas - Gestión de Ventas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root { --primary: #ff69b4; --secondary: #25d366; --accent: #3498db; --bg: #fff5f8; }
@@ -14,32 +14,26 @@
         #live-clock { font-size: 0.85em; margin-top: 5px; font-weight: 300; }
 
         .section { padding: 15px; border-bottom: 1px solid #eee; }
-        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1em; display: flex; justify-content: space-between; }
+        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
         
         .client-grid input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
 
-        /* Catálogo */
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; position: relative; }
+        .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; }
         .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
-        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 5px 0; }
         
-        .edit-controls { display: flex; gap: 5px; justify-content: center; margin-top: 5px; }
-        .price-input { width: 70px !important; text-align: center; color: #27ae60; font-weight: bold; border: 1px solid #ddd; border-radius: 5px; }
-        .qty-input { width: 40px !important; text-align: center; border: 1px solid var(--primary); border-radius: 5px; background: #fff0f5; }
+        .price-input { width: 85px !important; text-align: center; color: #27ae60; font-weight: bold; border: 1px solid #ddd; border-radius: 5px; padding: 4px; }
+        .qty-input { width: 45px !important; text-align: center; border: 1px solid var(--primary); border-radius: 5px; padding: 4px; }
 
-        /* Resumen de Pedido */
-        #order-summary { background: #f9f9f9; padding: 10px; border-radius: 10px; font-size: 0.9em; display: none; }
-        .order-item { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #ccc; }
+        /* Historial */
+        .history-list { font-size: 0.85em; max-height: 200px; overflow-y: auto; background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
+        .history-item { border-bottom: 1px solid #eee; padding: 5px 0; }
 
         .actions { padding: 15px; display: grid; gap: 10px; }
         button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95em; }
-        .btn-add { background: var(--accent); }
         .btn-wa { background: var(--secondary); }
         .btn-xl { background: #1d6f42; }
         .btn-bk { background: #7f8c8d; }
-        
-        .hidden-input { display: none; }
     </style>
 </head>
 <body>
@@ -47,7 +41,6 @@
 <div class="app-container">
     <div class="header">
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
-        <div style="font-size: 0.8em;">Ventas Marle - Peluches con Cobija</div>
         <div id="live-clock">Cargando hora...</div>
     </div>
 
@@ -61,31 +54,31 @@
     </div>
 
     <div class="section">
-        <h3>🧸 Catálogo <button class="btn-add" style="padding: 5px 10px; font-size: 0.7em;" onclick="document.getElementById('fileInput').click()">+ Nueva Foto</button></h3>
-        <input type="file" id="fileInput" class="hidden-input" accept="image/*" onchange="subirFoto(event)">
-        <div class="products-grid" id="catalog">
-            </div>
+        <h3>🧸 Editar Precios y Pedido</h3>
+        <div class="products-grid" id="catalog"></div>
     </div>
 
     <div class="section">
-        <h3>📝 Resumen del Pedido</h3>
-        <div id="order-summary"></div>
-        <div id="total-view" style="text-align: right; font-weight: bold; margin-top: 10px; color: var(--primary);">Total: $0</div>
+        <h3>📜 Historial de Pedidos Hoy</h3>
+        <div id="history" class="history-list">Aún no hay pedidos...</div>
     </div>
 
     <div class="actions">
-        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura a WhatsApp</button>
-        <button class="btn-xl" onclick="exportarExcel()">📊 Exportar a Excel</button>
-        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Backup Local</button>
+        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura WhatsApp</button>
+        <button class="btn-xl" onclick="exportarExcel()">📊 Generar Factura Excel</button>
+        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Precios (Backup)</button>
     </div>
 </div>
 
 <script>
-    // Base de datos inicial
     let productos = [
         { id: 1, nombre: "Snoopy Corazón", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg", precio: 85000 },
-        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 }
+        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 },
+        { id: 3, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg", precio: 78000 },
+        { id: 4, nombre: "Hello Kitty Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg", precio: 85000 }
     ];
+
+    let historial = [];
 
     function updateClock() {
         const now = new Date();
@@ -100,115 +93,90 @@
             container.innerHTML += `
                 <div class="product-card">
                     <img src="${p.img}" alt="${p.nombre}">
-                    <span class="product-name">${p.nombre}</span>
-                    <div class="edit-controls">
-                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}" onchange="actualizarResumen()">
-                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" onchange="actualizarResumen()">
+                    <div style="font-size:0.8em; font-weight:bold;">${p.nombre}</div>
+                    <div style="margin-top:5px;">
+                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}" title="Editar Precio">
+                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" title="Cantidad">
                     </div>
                 </div>
             `;
         });
     }
 
-    function subirFoto(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const nuevoId = productos.length + 1;
-            const nombre = prompt("Nombre del nuevo peluche:", "Nuevo Peluche");
-            const precio = prompt("Precio de venta:", "80000");
-            if(nombre) {
-                productos.push({ id: nuevoId, nombre: nombre, img: e.target.result, precio: parseInt(precio) });
-                cargarCatalogo();
-            }
-        }
-        reader.readAsDataURL(file);
-    }
-
-    function actualizarResumen() {
-        const summary = document.getElementById('order-summary');
-        let total = 0;
-        let html = "";
-        let tieneItems = false;
-
-        productos.forEach(p => {
-            const cant = document.getElementById(`cant_${p.id}`).value;
-            const precio = document.getElementById(`val_${p.id}`).value;
-            if (cant > 0) {
-                tieneItems = true;
-                const sub = cant * precio;
-                total += sub;
-                html += `<div class="order-item"><span>${p.nombre} x${cant}</span> <span>$${sub.toLocaleString()}</span></div>`;
-            }
-        });
-
-        summary.style.display = tieneItems ? "block" : "none";
-        summary.innerHTML = html;
-        document.getElementById('total-view').innerHTML = `Total Pedido: $${total.toLocaleString()}`;
-    }
-
     function enviarWhatsApp() {
         const cliente = document.getElementById('cNombre').value;
         const dir = document.getElementById('cDireccion').value;
-        const cel = document.getElementById('cCelular').value;
+        let total = 0;
         let pedidoTxt = "";
-        let granTotal = 0;
 
         productos.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
             const precio = document.getElementById(`val_${p.id}`).value;
             if (cant > 0) {
                 const sub = cant * precio;
-                pedidoTxt += `• ${p.nombre} (x${cant}) - $${sub.toLocaleString()}%0A`;
-                granTotal += sub;
+                pedidoTxt += `- ${p.nombre} (x${cant}) $${sub.toLocaleString()}%0A`;
+                total += sub;
             }
         });
 
-        if (!cliente || granTotal === 0) return alert("Llena los datos del cliente y selecciona productos.");
+        if (!cliente || total === 0) return alert("Completa los datos del cliente y el pedido.");
 
-        const msj = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A` +
-                    `*Fecha:* ${document.getElementById('live-clock').innerText}%0A%0A` +
-                    `*CLIENTE:* ${cliente}%0A` +
-                    `*DIRECCIÓN:* ${dir}%0A` +
-                    `*CELULAR:* ${cel}%0A` +
-                    `--------------------------------%0A` +
-                    `*PRODUCTOS:*%0A${pedidoTxt}%0A` +
-                    `*TOTAL A COBRAR: $${granTotal.toLocaleString()}*%0A` +
-                    `--------------------------------%0A` +
-                    `_¡Gracias por elegir a Marle!_`;
+        // Guardar en historial
+        historial.unshift({ fecha: new Date().toLocaleTimeString(), cliente, total });
+        actualizarHistorial();
 
+        const msj = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A*Cliente:* ${cliente}%0A*Dirección:* ${dir}%0A------------------%0A${pedidoTxt}*TOTAL: $${total.toLocaleString()}*%0A------------------%0A_¡Gracias!_`;
         window.open(`https://wa.me/3117700431?text=${msj}`, '_blank');
     }
 
+    function actualizarHistorial() {
+        const hDiv = document.getElementById('history');
+        hDiv.innerHTML = historial.map(h => `<div class="history-item"><b>${h.fecha}</b> - ${h.cliente}: $${h.total.toLocaleString()}</div>`).join("");
+    }
+
     function exportarExcel() {
-        let rows = [];
+        const cliente = document.getElementById('cNombre').value || "Cliente General";
+        const fecha = new Date().toLocaleDateString();
+        
+        let datosFactura = [
+            ["✨ VIBRAS POSITIVAS - FACTURA ✨"],
+            ["Fecha:", fecha],
+            ["Cliente:", cliente],
+            ["Dirección:", document.getElementById('cDireccion').value],
+            [],
+            ["Producto", "Cantidad", "Precio Unit.", "Subtotal"]
+        ];
+
+        let totalFinal = 0;
         productos.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
+            const precio = document.getElementById(`val_${p.id}`).value;
             if (cant > 0) {
-                rows.push({
-                    Fecha: new Date().toLocaleDateString(),
-                    Cliente: document.getElementById('cNombre').value,
-                    Direccion: document.getElementById('cDireccion').value,
-                    Producto: p.nombre,
-                    Cantidad: cant,
-                    Precio: document.getElementById(`val_${p.id}`).value,
-                    Total: cant * document.getElementById(`val_${p.id}`).value
-                });
+                const sub = cant * precio;
+                datosFactura.push([p.nombre, cant, precio, sub]);
+                totalFinal += sub;
             }
         });
-        const ws = XLSX.utils.json_to_sheet(rows);
+
+        datosFactura.push([], ["", "", "TOTAL:", totalFinal]);
+
+        const ws = XLSX.utils.aoa_to_sheet(datosFactura);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-        XLSX.writeFile(wb, "Ventas_Marle.xlsx");
+        XLSX.utils.book_append_sheet(wb, ws, "Factura");
+        XLSX.writeFile(wb, `Factura_${cliente}_${fecha}.xlsx`);
     }
 
     function hacerBackup() {
-        localStorage.setItem('vibras_catalog', JSON.stringify(productos));
-        alert("¡Catálogo y precios guardados! No se perderán aunque cierres la app.");
+        // Guardar los precios actuales en la memoria del navegador
+        productos.forEach(p => {
+            p.precio = document.getElementById(`val_${p.id}`).value;
+        });
+        localStorage.setItem('vibras_precios', JSON.stringify(productos));
+        alert("¡Precios guardados correctamente!");
     }
 
     window.onload = () => {
-        const saved = localStorage.getItem('vibras_catalog');
+        const saved = localStorage.getItem('vibras_precios');
         if(saved) productos = JSON.parse(saved);
         cargarCatalogo();
         setInterval(updateClock, 1000);
