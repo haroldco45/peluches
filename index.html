@@ -3,145 +3,192 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Peluches Marle - Vibras Positivas</title>
+    <title>Vibras Positivas - App de Ventas</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #ff69b4; --secondary: #4caf50; --dark: #333; }
-        body { font-family: 'Segoe UI', sans-serif; background: #fff5f8; margin: 0; padding: 10px; }
-        .app-container { max-width: 450px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #ffe1ed; }
+        :root { --primary: #ff69b4; --secondary: #25d366; --accent: #3498db; --bg: #fff5f8; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; position: relative; }
-        .logo-text { font-size: 1.4em; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
-        .sub-logo { font-size: 0.8em; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; }
-        #live-clock { font-size: 0.85em; margin-top: 8px; font-weight: 300; }
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        #live-clock { font-size: 0.85em; margin-top: 5px; font-weight: 300; }
 
-        .section { padding: 15px; border-bottom: 1px solid #f9f9f9; }
-        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1em; display: flex; align-items: center; gap: 5px; }
+        .section { padding: 15px; border-bottom: 1px solid #eee; }
+        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1em; display: flex; justify-content: space-between; }
         
-        input { padding: 10px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; width: 100%; box-sizing: border-box; background: #fafafa; }
-        .client-grid { display: grid; gap: 8px; }
+        .client-grid input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
 
-        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 5px; }
-        .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 8px; text-align: center; transition: 0.2s; }
-        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; background: #fdfdfd; }
-        .product-name { font-size: 0.85em; font-weight: bold; margin: 5px 0; display: block; color: var(--dark); }
+        /* Catálogo */
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+        .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; position: relative; }
+        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
+        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 5px 0; }
         
-        .price-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px; }
-        .price-input { width: 70px !important; padding: 4px !important; text-align: center; color: var(--secondary); font-weight: bold; border: 1px solid #e0e0e0; }
-        .qty-input { width: 45px !important; padding: 4px !important; text-align: center; border-radius: 5px; }
+        .edit-controls { display: flex; gap: 5px; justify-content: center; margin-top: 5px; }
+        .price-input { width: 70px !important; text-align: center; color: #27ae60; font-weight: bold; border: 1px solid #ddd; border-radius: 5px; }
+        .qty-input { width: 40px !important; text-align: center; border: 1px solid var(--primary); border-radius: 5px; background: #fff0f5; }
+
+        /* Resumen de Pedido */
+        #order-summary { background: #f9f9f9; padding: 10px; border-radius: 10px; font-size: 0.9em; display: none; }
+        .order-item { display: flex; justify-content: space-between; margin-bottom: 5px; border-bottom: 1px dashed #ccc; }
 
         .actions { padding: 15px; display: grid; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
-        .btn-wa { background: #25d366; box-shadow: 0 4px 10px rgba(37,211,102,0.3); }
+        button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95em; }
+        .btn-add { background: var(--accent); }
+        .btn-wa { background: var(--secondary); }
         .btn-xl { background: #1d6f42; }
-        .btn-bk { background: #5d5d5d; }
+        .btn-bk { background: #7f8c8d; }
+        
+        .hidden-input { display: none; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <div class="header">
-        <div class="logo-text">✨ Vibras Positivas ✨</div>
-        <div class="sub-logo">App de Ventas Marle</div>
-        <div id="live-clock">Cargando hora de Colombia...</div>
+        <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
+        <div style="font-size: 0.8em;">Ventas Marle - Peluches con Cobija</div>
+        <div id="live-clock">Cargando hora...</div>
     </div>
 
     <div class="section">
         <h3>👤 Datos del Cliente</h3>
         <div class="client-grid">
-            <input type="text" id="cNombre" placeholder="Nombre del cliente">
-            <input type="text" id="cDireccion" placeholder="Dirección de envío">
-            <input type="tel" id="cCelular" placeholder="Celular (WhatsApp)">
+            <input type="text" id="cNombre" placeholder="Nombre completo">
+            <input type="text" id="cDireccion" placeholder="Dirección y Barrio">
+            <input type="tel" id="cCelular" placeholder="Celular / WhatsApp">
         </div>
     </div>
 
     <div class="section">
-        <h3>🧸 Catálogo de Referencias</h3>
+        <h3>🧸 Catálogo <button class="btn-add" style="padding: 5px 10px; font-size: 0.7em;" onclick="document.getElementById('fileInput').click()">+ Nueva Foto</button></h3>
+        <input type="file" id="fileInput" class="hidden-input" accept="image/*" onchange="subirFoto(event)">
         <div class="products-grid" id="catalog">
             </div>
+    </div>
+
+    <div class="section">
+        <h3>📝 Resumen del Pedido</h3>
+        <div id="order-summary"></div>
+        <div id="total-view" style="text-align: right; font-weight: bold; margin-top: 10px; color: var(--primary);">Total: $0</div>
     </div>
 
     <div class="actions">
         <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura a WhatsApp</button>
         <button class="btn-xl" onclick="exportarExcel()">📊 Exportar a Excel</button>
-        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Backup</button>
+        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Backup Local</button>
     </div>
 </div>
 
 <script>
-    const productos = [
+    // Base de datos inicial
+    let productos = [
         { id: 1, nombre: "Snoopy Corazón", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg", precio: 85000 },
-        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 },
-        { id: 3, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg", precio: 78000 },
-        { id: 4, nombre: "Hello Kitty Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg", precio: 85000 },
-        { id: 5, nombre: "Snoopy Camiseta", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg", precio: 80000 },
-        { id: 6, nombre: "Tiburón Gris", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg", precio: 90000 }
+        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 }
     ];
+
+    function updateClock() {
+        const now = new Date();
+        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+        document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', options);
+    }
 
     function cargarCatalogo() {
         const container = document.getElementById('catalog');
+        container.innerHTML = "";
         productos.forEach(p => {
             container.innerHTML += `
                 <div class="product-card">
                     <img src="${p.img}" alt="${p.nombre}">
                     <span class="product-name">${p.nombre}</span>
-                    <div class="price-row">
-                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}">
-                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0">
+                    <div class="edit-controls">
+                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}" onchange="actualizarResumen()">
+                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" onchange="actualizarResumen()">
                     </div>
                 </div>
             `;
         });
     }
 
-    function updateClock() {
-        const now = new Date();
-        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
-        document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', options);
+    function subirFoto(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const nuevoId = productos.length + 1;
+            const nombre = prompt("Nombre del nuevo peluche:", "Nuevo Peluche");
+            const precio = prompt("Precio de venta:", "80000");
+            if(nombre) {
+                productos.push({ id: nuevoId, nombre: nombre, img: e.target.result, precio: parseInt(precio) });
+                cargarCatalogo();
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+
+    function actualizarResumen() {
+        const summary = document.getElementById('order-summary');
+        let total = 0;
+        let html = "";
+        let tieneItems = false;
+
+        productos.forEach(p => {
+            const cant = document.getElementById(`cant_${p.id}`).value;
+            const precio = document.getElementById(`val_${p.id}`).value;
+            if (cant > 0) {
+                tieneItems = true;
+                const sub = cant * precio;
+                total += sub;
+                html += `<div class="order-item"><span>${p.nombre} x${cant}</span> <span>$${sub.toLocaleString()}</span></div>`;
+            }
+        });
+
+        summary.style.display = tieneItems ? "block" : "none";
+        summary.innerHTML = html;
+        document.getElementById('total-view').innerHTML = `Total Pedido: $${total.toLocaleString()}`;
     }
 
     function enviarWhatsApp() {
         const cliente = document.getElementById('cNombre').value;
         const dir = document.getElementById('cDireccion').value;
-        const celCliente = document.getElementById('cCelular').value;
-        let pedidoTexto = "";
+        const cel = document.getElementById('cCelular').value;
+        let pedidoTxt = "";
         let granTotal = 0;
 
         productos.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
             const precio = document.getElementById(`val_${p.id}`).value;
             if (cant > 0) {
-                const subtotal = cant * precio;
-                pedidoTexto += `• ${p.nombre} (x${cant}) - $${subtotal.toLocaleString()}%0A`;
-                granTotal += subtotal;
+                const sub = cant * precio;
+                pedidoTxt += `• ${p.nombre} (x${cant}) - $${sub.toLocaleString()}%0A`;
+                granTotal += sub;
             }
         });
 
-        if (!cliente || granTotal === 0) return alert("Completa los datos y elige al menos un peluche.");
+        if (!cliente || granTotal === 0) return alert("Llena los datos del cliente y selecciona productos.");
 
-        const mensaje = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A` +
-                        `--------------------------------%0A` +
-                        `*Fecha:* ${document.getElementById('live-clock').innerText}%0A` +
-                        `*Cliente:* ${cliente}%0A` +
-                        `*Dirección:* ${dir}%0A` +
-                        `*WhatsApp:* ${celCliente}%0A` +
-                        `--------------------------------%0A` +
-                        `*PEDIDO:*%0A${pedidoTexto}%0A` +
-                        `*TOTAL A PAGAR: $${granTotal.toLocaleString()}*%0A` +
-                        `--------------------------------%0A` +
-                        `_¡Gracias por tu compra, Marle!_`;
+        const msj = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A` +
+                    `*Fecha:* ${document.getElementById('live-clock').innerText}%0A%0A` +
+                    `*CLIENTE:* ${cliente}%0A` +
+                    `*DIRECCIÓN:* ${dir}%0A` +
+                    `*CELULAR:* ${cel}%0A` +
+                    `--------------------------------%0A` +
+                    `*PRODUCTOS:*%0A${pedidoTxt}%0A` +
+                    `*TOTAL A COBRAR: $${granTotal.toLocaleString()}*%0A` +
+                    `--------------------------------%0A` +
+                    `_¡Gracias por elegir a Marle!_`;
 
-        window.open(`https://wa.me/3117700431?text=${mensaje}`, '_blank');
+        window.open(`https://wa.me/3117700431?text=${msj}`, '_blank');
     }
 
     function exportarExcel() {
-        let datos = [];
+        let rows = [];
         productos.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
             if (cant > 0) {
-                datos.push({
-                    Fecha: document.getElementById('live-clock').innerText,
+                rows.push({
+                    Fecha: new Date().toLocaleDateString(),
                     Cliente: document.getElementById('cNombre').value,
+                    Direccion: document.getElementById('cDireccion').value,
                     Producto: p.nombre,
                     Cantidad: cant,
                     Precio: document.getElementById(`val_${p.id}`).value,
@@ -149,22 +196,20 @@
                 });
             }
         });
-        const ws = XLSX.utils.json_to_sheet(datos);
+        const ws = XLSX.utils.json_to_sheet(rows);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Ventas");
-        XLSX.writeFile(wb, "Ventas_VibrasPositivas.xlsx");
+        XLSX.writeFile(wb, "Ventas_Marle.xlsx");
     }
 
     function hacerBackup() {
-        const backup = {
-            cliente: document.getElementById('cNombre').value,
-            celular: document.getElementById('cCelular').value
-        };
-        localStorage.setItem('vibras_pos_bk', JSON.stringify(backup));
-        alert("Copia de seguridad guardada en el navegador.");
+        localStorage.setItem('vibras_catalog', JSON.stringify(productos));
+        alert("¡Catálogo y precios guardados! No se perderán aunque cierres la app.");
     }
 
     window.onload = () => {
+        const saved = localStorage.getItem('vibras_catalog');
+        if(saved) productos = JSON.parse(saved);
         cargarCatalogo();
         setInterval(updateClock, 1000);
         updateClock();
