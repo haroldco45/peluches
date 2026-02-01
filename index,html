@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peluches Marle - Ventas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #8e44ad; --secondary: #2ecc71; --accent: #e74c3c; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; margin: 0; padding: 15px; color: #333; }
+        .app-container { max-width: 500px; margin: auto; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .header { background: var(--primary); color: white; padding: 20px; text-align: center; }
+        #live-clock { font-size: 0.9em; opacity: 0.9; margin-top: 5px; }
+        
+        .section { padding: 15px; border-bottom: 1px solid #eee; }
+        h3 { margin-top: 0; color: var(--primary); font-size: 1.1em; }
+        
+        .client-grid { display: grid; gap: 10px; }
+        input { padding: 12px; border: 1px solid #ddd; border-radius: 8px; font-size: 14px; width: 100%; box-sizing: border-box; }
+        
+        .products-container { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0; scrollbar-width: none; }
+        .product-card { min-width: 160px; background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .product-card img { width: 120px; height: 120px; object-fit: cover; border-radius: 10px; margin-bottom: 10px; }
+        .product-name { font-weight: bold; font-size: 0.9em; display: block; margin-bottom: 5px; }
+        .price-input { width: 80px !important; text-align: center; color: #27ae60; font-weight: bold; border-color: #2ecc71; }
+        
+        .actions { display: grid; gap: 10px; padding: 20px; }
+        button { padding: 15px; border: none; border-radius: 10px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; transition: 0.3s; }
+        .btn-wa { background: #25d366; }
+        .btn-xl { background: #1d6f42; }
+        .btn-bk { background: #3498db; }
+        button:active { transform: scale(0.98); }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <h2 style="margin:0">🧸 Peluches & Cobijas Marle</h2>
+        <div id="live-clock">Cargando hora de Colombia...</div>
+    </div>
+
+    <div class="section">
+        <h3>📍 Datos del Cliente</h3>
+        <div class="client-grid">
+            <input type="text" id="cNombre" placeholder="Nombre completo">
+            <input type="text" id="cDireccion" placeholder="Dirección de entrega">
+            <input type="tel" id="cCelular" placeholder="Celular del cliente">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>📸 Catálogo (Desliza para ver más)</h3>
+        <div class="products-container">
+            <div class="product-card">
+                <img src="https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg" alt="Snoopy">
+                <span class="product-name">Snoopy Cobija</span>
+                <input type="number" class="price-input" id="p1_val" value="85000" placeholder="Valor">
+                <input type="number" id="p1_cant" value="0" min="0" placeholder="Cant" style="margin-top:5px">
+            </div>
+            <div class="product-card">
+                <img src="https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg" alt="Stitch">
+                <span class="product-name">Stitch Cobija</span>
+                <input type="number" class="price-input" id="p2_val" value="95000" placeholder="Valor">
+                <input type="number" id="p2_cant" value="0" min="0" placeholder="Cant" style="margin-top:5px">
+            </div>
+            <div class="product-card">
+                <div style="height:120px; background:#f9f9f9; display:flex; align-items:center; justify-content:center; border:2px dashed #ccc; border-radius:10px; margin-bottom:10px">
+                    <span style="font-size:30px">➕</span>
+                </div>
+                <span class="product-name">Otro Modelo</span>
+                <input type="number" class="price-input" id="p3_val" value="0">
+                <input type="number" id="p3_cant" value="0">
+            </div>
+        </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura WhatsApp</button>
+        <button class="btn-xl" onclick="exportarExcel()">📊 Descargar Reporte Excel</button>
+        <button class="btn-bk" onclick="hacerBackup()">☁️ Botón Backup Cloud</button>
+    </div>
+</div>
+
+<script>
+    // Reloj Real de Colombia
+    function updateClock() {
+        const now = new Date();
+        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: 'long', year: 'numeric' };
+        document.getElementById('live-clock').innerHTML = now.toLocaleString('es-CO', options);
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function obtenerPedido() {
+        let pedido = [];
+        if(document.getElementById('p1_cant').value > 0) pedido.push({nombre: "Snoopy Cobija", cant: document.getElementById('p1_cant').value, precio: document.getElementById('p1_val').value});
+        if(document.getElementById('p2_cant').value > 0) pedido.push({nombre: "Stitch Cobija", cant: document.getElementById('p2_cant').value, precio: document.getElementById('p2_val').value});
+        return pedido;
+    }
+
+    function enviarWhatsApp() {
+        const telMarle = "3117700431";
+        const cliente = document.getElementById('cNombre').value;
+        const dir = document.getElementById('cDireccion').value;
+        const cel = document.getElementById('cCelular').value;
+        const lista = obtenerPedido();
+        
+        if(!cliente || lista.length === 0) return alert("Por favor llena el nombre del cliente y elige al menos un peluche");
+
+        let texto = `*ORDEN DE VENTA - MARLE*%0A` +
+                    `--------------------------%0A` +
+                    `*Fecha:* ${document.getElementById('live-clock').innerText}%0A%0A` +
+                    `*CLIENTE:* ${cliente}%0A` +
+                    `*DIRECCIÓN:* ${dir}%0A` +
+                    `*CELULAR:* ${cel}%0A` +
+                    `--------------------------%0A` +
+                    `*PEDIDO:*%0A`;
+        
+        let totalFinal = 0;
+        lista.forEach(p => {
+            let subtotal = p.cant * p.precio;
+            texto += `- ${p.nombre} (x${p.cant}) : $${subtotal}%0A`;
+            totalFinal += subtotal;
+        });
+
+        texto += `%0A*TOTAL A COBRAR: $${totalFinal}*%0A` +
+                 `--------------------------%0A` +
+                 `_Generado desde App de Marle_`;
+
+        window.open(`https://wa.me/${telMarle}?text=${texto}`, '_blank');
+    }
+
+    function exportarExcel() {
+        const lista = obtenerPedido();
+        const data = lista.map(p => ({
+            Fecha: document.getElementById('live-clock').innerText,
+            Cliente: document.getElementById('cNombre').value,
+            Producto: p.nombre,
+            Cantidad: p.cant,
+            Precio: p.precio,
+            Total: p.cant * p.precio
+        }));
+        
+        const ws = XLSX.utils.json_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+        XLSX.writeFile(wb, "Ventas_Marle.xlsx");
+    }
+
+    function hacerBackup() {
+        const backup = {
+            cliente: document.getElementById('cNombre').value,
+            productos: obtenerPedido()
+        };
+        localStorage.setItem('backup_marle', JSON.stringify(backup));
+        alert("¡Copia de seguridad guardada en el dispositivo!");
+    }
+</script>
+
+</body>
+</html>
