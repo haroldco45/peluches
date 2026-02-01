@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Peluches Marle - Vibras Positivas</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        :root { --primary: #ff69b4; --secondary: #4caf50; --dark: #333; }
+        body { font-family: 'Segoe UI', sans-serif; background: #fff5f8; margin: 0; padding: 10px; }
+        .app-container { max-width: 450px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 2px solid #ffe1ed; }
+        
+        .header { background: var(--primary); color: white; padding: 15px; text-align: center; position: relative; }
+        .logo-text { font-size: 1.4em; font-weight: bold; margin: 0; text-transform: uppercase; letter-spacing: 1px; }
+        .sub-logo { font-size: 0.8em; background: rgba(255,255,255,0.2); padding: 2px 10px; border-radius: 10px; }
+        #live-clock { font-size: 0.85em; margin-top: 8px; font-weight: 300; }
+
+        .section { padding: 15px; border-bottom: 1px solid #f9f9f9; }
+        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1em; display: flex; align-items: center; gap: 5px; }
+        
+        input { padding: 10px; border: 1px solid #eee; border-radius: 10px; font-size: 14px; width: 100%; box-sizing: border-box; background: #fafafa; }
+        .client-grid { display: grid; gap: 8px; }
+
+        .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; padding: 5px; }
+        .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 8px; text-align: center; transition: 0.2s; }
+        .product-card img { width: 100%; height: 120px; object-fit: cover; border-radius: 10px; background: #fdfdfd; }
+        .product-name { font-size: 0.85em; font-weight: bold; margin: 5px 0; display: block; color: var(--dark); }
+        
+        .price-row { display: flex; align-items: center; justify-content: center; gap: 5px; margin-top: 5px; }
+        .price-input { width: 70px !important; padding: 4px !important; text-align: center; color: var(--secondary); font-weight: bold; border: 1px solid #e0e0e0; }
+        .qty-input { width: 45px !important; padding: 4px !important; text-align: center; border-radius: 5px; }
+
+        .actions { padding: 15px; display: grid; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-wa { background: #25d366; box-shadow: 0 4px 10px rgba(37,211,102,0.3); }
+        .btn-xl { background: #1d6f42; }
+        .btn-bk { background: #5d5d5d; }
+    </style>
+</head>
+<body>
+
+<div class="app-container">
+    <div class="header">
+        <div class="logo-text">✨ Vibras Positivas ✨</div>
+        <div class="sub-logo">App de Ventas Marle</div>
+        <div id="live-clock">Cargando hora de Colombia...</div>
+    </div>
+
+    <div class="section">
+        <h3>👤 Datos del Cliente</h3>
+        <div class="client-grid">
+            <input type="text" id="cNombre" placeholder="Nombre del cliente">
+            <input type="text" id="cDireccion" placeholder="Dirección de envío">
+            <input type="tel" id="cCelular" placeholder="Celular (WhatsApp)">
+        </div>
+    </div>
+
+    <div class="section">
+        <h3>🧸 Catálogo de Referencias</h3>
+        <div class="products-grid" id="catalog">
+            </div>
+    </div>
+
+    <div class="actions">
+        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura a WhatsApp</button>
+        <button class="btn-xl" onclick="exportarExcel()">📊 Exportar a Excel</button>
+        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Backup</button>
+    </div>
+</div>
+
+<script>
+    const productos = [
+        { id: 1, nombre: "Snoopy Corazón", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg", precio: 85000 },
+        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 },
+        { id: 3, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg", precio: 78000 },
+        { id: 4, nombre: "Hello Kitty Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg", precio: 85000 },
+        { id: 5, nombre: "Snoopy Camiseta", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg", precio: 80000 },
+        { id: 6, nombre: "Tiburón Gris", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg", precio: 90000 }
+    ];
+
+    function cargarCatalogo() {
+        const container = document.getElementById('catalog');
+        productos.forEach(p => {
+            container.innerHTML += `
+                <div class="product-card">
+                    <img src="${p.img}" alt="${p.nombre}">
+                    <span class="product-name">${p.nombre}</span>
+                    <div class="price-row">
+                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}">
+                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0">
+                    </div>
+                </div>
+            `;
+        });
+    }
+
+    function updateClock() {
+        const now = new Date();
+        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+        document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', options);
+    }
+
+    function enviarWhatsApp() {
+        const cliente = document.getElementById('cNombre').value;
+        const dir = document.getElementById('cDireccion').value;
+        const celCliente = document.getElementById('cCelular').value;
+        let pedidoTexto = "";
+        let granTotal = 0;
+
+        productos.forEach(p => {
+            const cant = document.getElementById(`cant_${p.id}`).value;
+            const precio = document.getElementById(`val_${p.id}`).value;
+            if (cant > 0) {
+                const subtotal = cant * precio;
+                pedidoTexto += `• ${p.nombre} (x${cant}) - $${subtotal.toLocaleString()}%0A`;
+                granTotal += subtotal;
+            }
+        });
+
+        if (!cliente || granTotal === 0) return alert("Completa los datos y elige al menos un peluche.");
+
+        const mensaje = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A` +
+                        `--------------------------------%0A` +
+                        `*Fecha:* ${document.getElementById('live-clock').innerText}%0A` +
+                        `*Cliente:* ${cliente}%0A` +
+                        `*Dirección:* ${dir}%0A` +
+                        `*WhatsApp:* ${celCliente}%0A` +
+                        `--------------------------------%0A` +
+                        `*PEDIDO:*%0A${pedidoTexto}%0A` +
+                        `*TOTAL A PAGAR: $${granTotal.toLocaleString()}*%0A` +
+                        `--------------------------------%0A` +
+                        `_¡Gracias por tu compra, Marle!_`;
+
+        window.open(`https://wa.me/3117700431?text=${mensaje}`, '_blank');
+    }
+
+    function exportarExcel() {
+        let datos = [];
+        productos.forEach(p => {
+            const cant = document.getElementById(`cant_${p.id}`).value;
+            if (cant > 0) {
+                datos.push({
+                    Fecha: document.getElementById('live-clock').innerText,
+                    Cliente: document.getElementById('cNombre').value,
+                    Producto: p.nombre,
+                    Cantidad: cant,
+                    Precio: document.getElementById(`val_${p.id}`).value,
+                    Total: cant * document.getElementById(`val_${p.id}`).value
+                });
+            }
+        });
+        const ws = XLSX.utils.json_to_sheet(datos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Ventas");
+        XLSX.writeFile(wb, "Ventas_VibrasPositivas.xlsx");
+    }
+
+    function hacerBackup() {
+        const backup = {
+            cliente: document.getElementById('cNombre').value,
+            celular: document.getElementById('cCelular').value
+        };
+        localStorage.setItem('vibras_pos_bk', JSON.stringify(backup));
+        alert("Copia de seguridad guardada en el navegador.");
+    }
+
+    window.onload = () => {
+        cargarCatalogo();
+        setInterval(updateClock, 1000);
+        updateClock();
+    };
+</script>
+
+</body>
+</html>
