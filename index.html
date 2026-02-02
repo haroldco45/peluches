@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibras Positivas - Haz tu Pedido</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <title>Vibras Positivas - Negocio de Marle</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <style>
         :root { --pink: #ff69b4; --green: #25d366; --bg: #fff5f8; --admin: #5d6d7e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
-        .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid #ffe1ed; }
         .header { background: var(--pink); color: white; padding: 15px; text-align: center; }
         .section { padding: 15px; border-bottom: 1px solid #eee; }
         h3 { margin: 0 0 10px 0; color: var(--pink); font-size: 1.1em; }
@@ -19,53 +19,58 @@
         .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 8px 0; height: 35px; overflow: hidden; }
         .qty-input { width: 70px !important; text-align: center; border: 2px solid #ffe1ed; border-radius: 8px; padding: 5px; font-weight: bold; }
         
-        /* Estilos Admin */
-        .admin-only { display: none; background: #f4f6f7; padding: 10px; border-radius: 10px; margin-top: 10px; border: 1px solid #ccc; }
-        .hidden-item { display: none; } /* El cliente no los ve */
-        .admin-view .hidden-item { display: block; opacity: 0.5; filter: grayscale(1); }
-        .btn-toggle { position: absolute; top: 5px; right: 5px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
+        /* Ocultar elementos de admin por defecto */
+        .admin-controls { display: none; margin-bottom: 10px; background: #eee; padding: 10px; border-radius: 10px; }
+        .btn-toggle { position: absolute; top: 5px; right: 5px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: none; }
+        .hidden-item { display: none; }
+        
+        /* Modo edición activado */
+        .edit-mode .admin-controls { display: block; }
+        .edit-mode .btn-toggle { display: flex; align-items: center; justify-content: center; }
+        .edit-mode .hidden-item { display: block; opacity: 0.4; filter: grayscale(1); }
 
-        .resumen-box { background: #fffef0; padding: 10px; border-radius: 10px; border: 1px solid #f1c40f; margin-top: 10px; }
+        .resumen-box { background: #fffef0; padding: 10px; border-radius: 10px; border: 1px solid #f1c40f; margin-top: 10px; font-size: 0.9em; }
         .actions { padding: 15px; display: grid; gap: 10px; }
         button { padding: 14px; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-wa { background: var(--green); font-size: 1.1em; }
-        .btn-admin { background: var(--admin); font-size: 0.8em; margin-top: 20px; }
+        .btn-wa { background: var(--green); }
+        .btn-xl { background: #1d6f42; }
+        .btn-admin-access { background: none; color: #ccc; font-size: 0.7em; padding: 5px; margin-top: 20px; }
     </style>
 </head>
-<body>
-<div class="app-container" id="mainApp">
+<body id="bodyApp">
+
+<div class="app-container">
     <div class="header">
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
-        <div style="font-size: 0.8em;">Catálogo de Peluches & Cobijas</div>
+        <div style="font-size:0.8em">Negocio de Marle</div>
     </div>
 
     <div class="section">
-        <h3>👤 Tus Datos para el Envío</h3>
+        <h3>👤 Tus Datos de Envío</h3>
         <input type="text" id="cNombre" placeholder="Tu Nombre">
         <input type="text" id="cDireccion" placeholder="Dirección y Barrio">
         <input type="tel" id="cCelular" placeholder="Tu Celular">
     </div>
 
     <div class="section">
-        <h3>🧸 Elige tus Favoritos</h3>
+        <div class="admin-controls">
+            <strong>Panel Admin:</strong>
+            <button style="background:#3498db; padding:8px; font-size:0.8em" onclick="document.getElementById('fIn').click()">Subir Nueva Foto</button>
+            <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subirFotoLocal(event)">
+        </div>
+        <h3>🧸 Elige tus Productos</h3>
         <div class="products-grid" id="catalog"></div>
     </div>
 
     <div class="section">
-        <h3>📝 Tu Pedido</h3>
-        <div id="lista-resumen" class="resumen-box">Aún no has elegido nada.</div>
+        <h3>📝 Resumen de Pedido</h3>
+        <div id="lista-resumen" class="resumen-box">No has elegido nada aún.</div>
     </div>
 
     <div class="actions">
         <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Pedir por WhatsApp</button>
-        <button class="btn-admin" onclick="toggleAdminPanel()">⚙️ Panel de Marle (Solo Administrador)</button>
-        
-        <div id="adminPanel" class="admin-only">
-            <h4>Panel de Control</h4>
-            <button style="background:#3498db; margin-bottom:10px" onclick="document.getElementById('fIn').click()">+ Subir Nueva Foto</button>
-            <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subirFotoLocal(event)">
-            <p style="font-size:0.7em">Toca los ojos 👁️ en las fotos para ocultar productos del catálogo.</p>
-        </div>
+        <button class="btn-xl" onclick="exportarExcel()">📊 Descargar Factura (Excel)</button>
+        <button class="btn-admin-access" onclick="activarAdmin()">⚙️</button>
     </div>
 </div>
 
@@ -78,60 +83,43 @@
 
     let desactivados = JSON.parse(localStorage.getItem('marle_desactivados')) || [];
     let catalogoExtra = JSON.parse(localStorage.getItem('marle_extra')) || [];
-    let isAdmin = false;
 
     function mostrar() {
         const c = document.getElementById('catalog');
         c.innerHTML = "";
-        
-        // Cargar fotos de GitHub
-        archivos.forEach((nombre, i) => {
-            crearCard(c, `fotos/${nombre}`, nombre.split('.')[0], `f_${i}`, nombre);
-        });
-
-        // Cargar extras
-        catalogoExtra.forEach((p, i) => {
-            crearCard(c, p.img, p.nombre, `e_${i}`, p.nombre);
-        });
+        archivos.forEach((n, i) => crearCard(c, `fotos/${n}`, n.split('.')[0], `f_${i}`, n));
+        catalogoExtra.forEach((p, i) => crearCard(c, p.img, p.nombre, `e_${i}`, p.nombre));
         actualizarResumen();
     }
 
-    function crearCard(contenedor, src, nombre, id, refNombre) {
-        const isHidden = desactivados.includes(refNombre);
+    function crearCard(contenedor, src, nombre, id, ref) {
+        const isHidden = desactivados.includes(ref);
         contenedor.innerHTML += `
             <div class="product-card ${isHidden ? 'hidden-item' : ''}">
-                <button class="btn-toggle admin-only" onclick="toggleItem('${refNombre}')" style="display:${isAdmin?'flex':'none'}">
-                    ${isHidden ? '❌' : '👁️'}
-                </button>
+                <button class="btn-toggle" onclick="toggleItem('${ref}')">${isHidden ? '❌' : '👁️'}</button>
                 <img src="${src}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
                 <span class="product-name">${nombre}</span>
                 <input type="number" class="qty-input" id="q_${id}" value="0" min="0" oninput="actualizarResumen()">
             </div>`;
     }
 
-    function toggleAdminPanel() {
-        isAdmin = !isAdmin;
-        document.getElementById('adminPanel').style.display = isAdmin ? 'block' : 'none';
-        document.getElementById('mainApp').classList.toggle('admin-view', isAdmin);
-        mostrar();
+    function activarAdmin() {
+        document.getElementById('bodyApp').classList.toggle('edit-mode');
+        alert("Modo Administrador: Ahora puedes ocultar/activar fotos con el ojo o subir nuevas.");
     }
 
-    function toggleItem(nombre) {
-        if (desactivados.includes(nombre)) {
-            desactivados = desactivados.filter(n => n !== nombre);
-        } else {
-            desactivados.push(nombre);
-        }
+    function toggleItem(n) {
+        desactivados.includes(n) ? desactivados = desactivados.filter(x => x!==n) : desactivados.push(n);
         localStorage.setItem('marle_desactivados', JSON.stringify(desactivados));
         mostrar();
     }
 
     function subirFotoLocal(e) {
         const reader = new FileReader();
-        reader.onload = function(event) {
-            const n = prompt("Nombre del peluche:");
-            if(n) {
-                catalogoExtra.push({ nombre: n, img: event.target.result });
+        reader.onload = (ev) => {
+            const nom = prompt("Nombre del peluche:");
+            if(nom) {
+                catalogoExtra.push({nombre: nom, img: ev.target.result});
                 localStorage.setItem('marle_extra', JSON.stringify(catalogoExtra));
                 mostrar();
             }
@@ -140,23 +128,21 @@
     }
 
     function actualizarResumen() {
-        const resumen = document.getElementById('lista-resumen');
+        const res = document.getElementById('lista-resumen');
         let html = "";
-        let hayAlgo = false;
         document.querySelectorAll('.qty-input').forEach(input => {
             if(input.value > 0) {
-                const nombre = input.previousElementSibling.innerText;
-                html += `<div>• ${nombre}: <b>${input.value}</b></div>`;
-                hayAlgo = true;
+                html += `<div>• ${input.previousElementSibling.innerText}: <b>${input.value}</b></div>`;
             }
         });
-        resumen.innerHTML = hayAlgo ? html : "Aún no has elegido nada.";
+        res.innerHTML = html || "No has elegido nada aún.";
     }
 
     function enviarWhatsApp() {
         const cli = document.getElementById('cNombre').value;
         const dir = document.getElementById('cDireccion').value;
-        let txt = `*✨ PEDIDO VIBRAS POSITIVAS ✨*%0A*Nombre:* ${cli}%0A*Dirección:* ${dir}%0A------------------%0A`;
+        const cel = document.getElementById('cCelular').value;
+        let txt = `*✨ VIBRAS POSITIVAS - NEGOCIO DE MARLE ✨*%0A*Cliente:* ${cli}%0A*Dirección:* ${dir}%0A*Celular:* ${cel}%0A------------------%0A`;
         let hay = false;
         document.querySelectorAll('.qty-input').forEach(input => {
             if(input.value > 0) {
@@ -166,6 +152,18 @@
         });
         if(!cli || !hay) return alert("Por favor escribe tu nombre y elige algún peluche.");
         window.open(`https://wa.me/3117700431?text=${txt}`, '_blank');
+    }
+
+    function exportarExcel() {
+        let datos = [["VIBRAS POSITIVAS - NEGOCIO DE MARLE"], ["Cliente", document.getElementById('cNombre').value], ["Dirección", document.getElementById('cDireccion').value], [], ["Producto", "Cantidad"]];
+        document.querySelectorAll('.qty-input').forEach(input => {
+            if(input.value > 0) datos.push([input.previousElementSibling.innerText, input.value]);
+        });
+        if(datos.length < 6) return alert("El pedido está vacío.");
+        const ws = XLSX.utils.aoa_to_sheet(datos);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pedido");
+        XLSX.writeFile(wb, "Factura_Marle.xlsx");
     }
 
     window.onload = mostrar;
