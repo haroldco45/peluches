@@ -18,14 +18,24 @@
         .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; position: relative; }
         .product-card img { width: 100%; height: 120px; object-fit: contain; border-radius: 10px; }
         .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 8px 0; height: 35px; overflow: hidden; }
+        
+        /* Precios */
         .price-display { color: var(--green); font-weight: bold; font-size: 0.9em; margin-bottom: 5px; display: block; }
+        .admin-price-input { display: none; width: 90%; margin: 5px auto; padding: 5px; border: 1px solid var(--pink); border-radius: 5px; text-align: center; font-weight: bold; color: var(--green); }
+        .edit-mode .admin-price-input { display: block; }
+        .edit-mode .price-display { display: none; }
+
         .qty-input { width: 70px !important; text-align: center; border: 2px solid #ffe1ed; border-radius: 8px; padding: 5px; font-weight: bold; }
-        .admin-controls { display: none; background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; }
+        
+        /* Controles Admin */
+        .admin-controls { display: none; background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
         .btn-toggle { position: absolute; top: 5px; right: 5px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: none; z-index: 10; }
         .edit-mode .admin-controls { display: block; }
         .edit-mode .btn-toggle { display: flex; align-items: center; justify-content: center; }
+        
         .hidden-item { display: none; }
         .edit-mode .hidden-item { display: block; opacity: 0.4; filter: grayscale(1); }
+
         .resumen-box { background: #fffef0; padding: 10px; border-radius: 10px; border: 1px solid #f1c40f; margin-top: 10px; font-size: 0.9em; }
         .actions { padding: 15px; display: grid; gap: 10px; }
         button { padding: 14px; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -40,42 +50,50 @@
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
         <div id="live-clock">Cargando hora de Colombia...</div>
     </div>
+
     <div class="section">
         <h3>👤 Tus Datos de Envío</h3>
         <input type="text" id="cNombre" placeholder="Tu Nombre Completo">
-        <input type="text" id="cDireccion" placeholder="Dirección de Envío y Ciudad">
-        <input type="tel" id="cCelular" placeholder="Tu Celular de contacto">
+        <input type="text" id="cDireccion" placeholder="Dirección de Envío">
+        <input type="tel" id="cCelular" placeholder="Tu Celular">
     </div>
+
     <div class="section">
         <div class="admin-controls">
-            <strong>🔒 Panel Marle:</strong>
-            <button style="background:#3498db; padding:8px; font-size:0.8em; margin-top:5px" onclick="document.getElementById('fIn').click()">Subir Nueva Foto</button>
+            <strong>🔒 Panel de Edición de Marle</strong><br>
+            <button style="background:#3498db; padding:8px; font-size:0.8em; margin-top:10px" onclick="document.getElementById('fIn').click()">+ Subir Nueva Foto</button>
             <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subirFotoLocal(event)">
+            <p style="font-size:0.7em; margin:5px 0">Edita los precios abajo o usa el 👁️ para ocultar.</p>
         </div>
-        <h3>🧸 Elige tus Productos</h3>
+        <h3>🧸 Catálogo de Peluches</h3>
         <div class="products-grid" id="catalog"></div>
     </div>
+
     <div class="section">
         <h3>📝 Resumen de Pedido</h3>
         <div id="lista-resumen" class="resumen-box">No has elegido nada aún.</div>
     </div>
+
     <div class="actions">
         <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Pedir por WhatsApp</button>
         <button class="btn-xl" onclick="exportarExcel()">📊 Descargar Excel</button>
         <button class="btn-admin-access" onclick="accesoSeguro()">⚙️</button>
     </div>
 </div>
-<script>
-    const archivos = [
-        {n: "CAPIBARA CERDITO.jpg", p: 110000}, {n: "CAPIBARA TIBURON.jpg", p: 110000},
-        {n: "DINOSAURIO AZUL.jpg", p: 95000}, {n: "POKEMON FUEGO.jpg", p: 85000},
-        {n: "POKEMON PSYDUCK.jpg", p: 85000}, {n: "TORO GRIS.jpg", p: 90000},
-        {n: "CONEJITOMORADO.JPG", p: 80000}, {n: "GATO NEGRO.JPG", p: 85000},
-        {n: "PERRITO.JPG", p: 80000}, {n: "UNICORNIO CELESTE.png", p: 95000}
-    ];
 
-    let desactivados = JSON.parse(localStorage.getItem('marle_desactivados')) || [];
-    let catalogoExtra = JSON.parse(localStorage.getItem('marle_extra')) || [];
+<script>
+    let catalogo = JSON.parse(localStorage.getItem('vibras_master_db')) || [
+        {id: 1, n: "CAPIBARA CERDITO.jpg", t: "Capibara Cerdito", p: 110000, h: false},
+        {id: 2, n: "CAPIBARA TIBURON.jpg", t: "Capibara Tiburón", p: 110000, h: false},
+        {id: 3, n: "DINOSAURIO AZUL.jpg", t: "Dinosaurio Azul", p: 95000, h: false},
+        {id: 4, n: "POKEMON FUEGO.jpg", t: "Pokémon Fuego", p: 85000, h: false},
+        {id: 5, n: "POKEMON PSYDUCK.jpg", t: "Pokémon Psyduck", p: 85000, h: false},
+        {id: 6, n: "TORO GRIS.jpg", t: "Toro Gris", p: 90000, h: false},
+        {id: 7, n: "CONEJITOMORADO.JPG", t: "Conejito Morado", p: 80000, h: false},
+        {id: 8, n: "GATO NEGRO.JPG", t: "Gato Negro", p: 85000, h: false},
+        {id: 9, n: "PERRITO.JPG", t: "Perrito Husky", p: 80000, h: false},
+        {id: 10, n: "UNICORNIO CELESTE.png", t: "Unicornio Celeste", p: 95000, h: false}
+    ];
 
     function updateClock() {
         const now = new Date();
@@ -87,36 +105,39 @@
     function mostrar() {
         const c = document.getElementById('catalog');
         c.innerHTML = "";
-        archivos.forEach((p, i) => crearCard(c, `fotos/${p.n}`, p.n.split('.')[0], `f_${i}`, p.n, p.p));
-        catalogoExtra.forEach((p, i) => crearCard(c, p.img, p.nombre, `e_${i}`, p.nombre, p.precio || 85000));
+        catalogo.forEach((item) => {
+            const src = item.n.startsWith('data:') ? item.n : `fotos/${item.n}`;
+            c.innerHTML += `
+                <div class="product-card ${item.h ? 'hidden-item' : ''}">
+                    <button class="btn-toggle" onclick="toggleItem(${item.id})">${item.h ? '❌' : '👁️'}</button>
+                    <img src="${src}" alt="${item.t}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
+                    <span class="product-name">${item.t}</span>
+                    <span class="price-display">$${item.p.toLocaleString()}</span>
+                    <input type="number" class="admin-price-input" value="${item.p}" onchange="updatePrecio(${item.id}, this.value)">
+                    <input type="number" class="qty-input" id="q_${item.id}" data-precio="${item.p}" value="0" min="0" oninput="actualizarResumen()">
+                </div>`;
+        });
         actualizarResumen();
     }
 
-    function crearCard(contenedor, src, nombre, id, ref, precio) {
-        const isHidden = desactivados.includes(ref);
-        contenedor.innerHTML += `
-            <div class="product-card ${isHidden ? 'hidden-item' : ''}">
-                <button class="btn-toggle" onclick="toggleItem('${ref}')">${isHidden ? '❌' : '👁️'}</button>
-                <img src="${src}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
-                <span class="product-name">${nombre}</span>
-                <span class="price-display">$${precio.toLocaleString()}</span>
-                <input type="number" class="qty-input" id="q_${id}" data-precio="${precio}" value="0" min="0" oninput="actualizarResumen()">
-            </div>`;
-    }
-
     function accesoSeguro() {
-        const pass = prompt("Ingrese la contraseña de administrador:");
+        const pass = prompt("Contraseña de Marle:");
         if(pass === "Marle2026") {
             document.getElementById('bodyApp').classList.toggle('edit-mode');
-            alert("Modo Administrador activado.");
-        } else {
-            alert("Contraseña incorrecta.");
-        }
+        } else { alert("Clave incorrecta"); }
     }
 
-    function toggleItem(n) {
-        desactivados.includes(n) ? desactivados = desactivados.filter(x => x!==n) : desactivados.push(n);
-        localStorage.setItem('marle_desactivados', JSON.stringify(desactivados));
+    function updatePrecio(id, nuevoPrecio) {
+        const index = catalogo.findIndex(x => x.id === id);
+        catalogo[index].p = parseInt(nuevoPrecio);
+        localStorage.setItem('vibras_master_db', JSON.stringify(catalogo));
+        mostrar();
+    }
+
+    function toggleItem(id) {
+        const index = catalogo.findIndex(x => x.id === id);
+        catalogo[index].h = !catalogo[index].h;
+        localStorage.setItem('vibras_master_db', JSON.stringify(catalogo));
         mostrar();
     }
 
@@ -124,10 +145,10 @@
         const reader = new FileReader();
         reader.onload = (ev) => {
             const nom = prompt("Nombre del peluche:");
-            const pre = prompt("Precio del peluche:", "85000");
+            const pre = prompt("Precio:", "85000");
             if(nom) {
-                catalogoExtra.push({nombre: nom, img: ev.target.result, precio: parseInt(pre)});
-                localStorage.setItem('marle_extra', JSON.stringify(catalogoExtra));
+                catalogo.push({id: Date.now(), n: ev.target.result, t: nom, p: parseInt(pre), h: false});
+                localStorage.setItem('vibras_master_db', JSON.stringify(catalogo));
                 mostrar();
             }
         };
@@ -137,14 +158,15 @@
     function actualizarResumen() {
         const res = document.getElementById('lista-resumen');
         let html = ""; let total = 0;
-        document.querySelectorAll('.qty-input').forEach(input => {
-            if(input.value > 0) {
-                const sub = input.value * input.dataset.precio;
-                html += `<div>• ${input.parentElement.querySelector('.product-name').innerText}: ${input.value} x $${parseInt(input.dataset.precio).toLocaleString()} = <b>$${sub.toLocaleString()}</b></div>`;
+        catalogo.forEach(item => {
+            const q = document.getElementById(`q_${item.id}`).value;
+            if(q > 0 && !item.h) {
+                const sub = q * item.p;
+                html += `<div>• ${item.t}: ${q} x $${item.p.toLocaleString()} = <b>$${sub.toLocaleString()}</b></div>`;
                 total += sub;
             }
         });
-        res.innerHTML = html ? html + `<hr><b>TOTAL: $${total.toLocaleString()}</b>` : "No has elegido nada aún.";
+        res.innerHTML = html ? html + `<hr><b>TOTAL A PAGAR: $${total.toLocaleString()}</b>` : "No has elegido nada aún.";
     }
 
     function enviarWhatsApp() {
@@ -153,44 +175,45 @@
         const time = document.getElementById('live-clock').innerText;
         let txt = `*✨ VIBRAS POSITIVAS - NEGOCIO DE MARLE ✨*%0A*Fecha:* ${time}%0A*Cliente:* ${cli}%0A*Dirección:* ${dir}%0A------------------%0A`;
         let total = 0; let hay = false;
-        document.querySelectorAll('.qty-input').forEach(input => {
-            if(input.value > 0) {
-                const sub = input.value * input.dataset.precio;
-                txt += `• ${input.parentElement.querySelector('.product-name').innerText} (x${input.value}) - $${sub.toLocaleString()}%0A`;
+        catalogo.forEach(item => {
+            const q = document.getElementById(`q_${item.id}`).value;
+            if(q > 0 && !item.h) {
+                const sub = q * item.p;
+                txt += `• ${item.t} (x${q}) - $${sub.toLocaleString()}%0A`;
                 total += sub; hay = true;
             }
         });
         if(!cli || !hay) return alert("Faltan datos.");
-        txt += `------------------%0A*TOTAL A PAGAR: $${total.toLocaleString()}*`;
+        txt += `------------------%0A*TOTAL: $${total.toLocaleString()}*`;
         window.open(`https://wa.me/3117700431?text=${txt}`, '_blank');
     }
 
     function exportarExcel() {
         const cli = document.getElementById('cNombre').value;
-        const time = document.getElementById('live-clock').innerText;
         let datos = [
             ["VIBRAS POSITIVAS - NEGOCIO DE MARLE"],
-            ["Fecha:", time],
+            ["Fecha:", document.getElementById('live-clock').innerText],
             ["Cliente:", cli],
             ["Dirección:", document.getElementById('cDireccion').value],
             [],
             ["Producto", "Cantidad", "Precio Unit.", "Subtotal"]
         ];
         let total = 0;
-        document.querySelectorAll('.qty-input').forEach(input => {
-            if(input.value > 0) {
-                const sub = input.value * input.dataset.precio;
-                datos.push([input.parentElement.querySelector('.product-name').innerText, input.value, parseInt(input.dataset.precio), sub]);
+        catalogo.forEach(item => {
+            const q = document.getElementById(`q_${item.id}`).value;
+            if(q > 0 && !item.h) {
+                const sub = q * item.p;
+                datos.push([item.t, q, item.p, sub]);
                 total += sub;
             }
         });
-        datos.push([], ["", "", "TOTAL GENERAL:", total]);
+        datos.push([], ["", "", "TOTAL:", total]);
         const ws = XLSX.utils.aoa_to_sheet(datos);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Factura");
         XLSX.writeFile(wb, `Factura_${cli}.xlsx`);
     }
-    window.onload = () => { updateClock(); mostrar(); };
+    window.onload = mostrar;
 </script>
 </body>
 </html>
