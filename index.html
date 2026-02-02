@@ -19,15 +19,13 @@
         .product-card img { width: 100%; height: 120px; object-fit: contain; border-radius: 10px; }
         .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 8px 0; height: 35px; overflow: hidden; }
         
-        /* Precios */
-        .price-display { color: var(--green); font-weight: bold; font-size: 0.9em; margin-bottom: 5px; display: block; }
-        .admin-price-input { display: none; width: 90%; margin: 5px auto; padding: 5px; border: 1px solid var(--pink); border-radius: 5px; text-align: center; font-weight: bold; color: var(--green); }
+        .price-display { color: var(--green); font-weight: bold; font-size: 1em; margin-bottom: 5px; display: block; }
+        .admin-price-input { display: none; width: 90%; margin: 5px auto; padding: 8px; border: 2px solid var(--pink); border-radius: 8px; text-align: center; font-weight: bold; color: var(--green); }
         .edit-mode .admin-price-input { display: block; }
         .edit-mode .price-display { display: none; }
 
         .qty-input { width: 70px !important; text-align: center; border: 2px solid #ffe1ed; border-radius: 8px; padding: 5px; font-weight: bold; }
         
-        /* Controles Admin */
         .admin-controls { display: none; background: #eee; padding: 10px; border-radius: 10px; margin-bottom: 10px; text-align: center; }
         .btn-toggle { position: absolute; top: 5px; right: 5px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; display: none; z-index: 10; }
         .edit-mode .admin-controls { display: block; }
@@ -60,10 +58,8 @@
 
     <div class="section">
         <div class="admin-controls">
-            <strong>🔒 Panel de Edición de Marle</strong><br>
-            <button style="background:#3498db; padding:8px; font-size:0.8em; margin-top:10px" onclick="document.getElementById('fIn').click()">+ Subir Nueva Foto</button>
-            <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subirFotoLocal(event)">
-            <p style="font-size:0.7em; margin:5px 0">Edita los precios abajo o usa el 👁️ para ocultar.</p>
+            <strong>🔒 Panel de Edición - MARLE</strong><br>
+            <p style="font-size:0.7em; margin:5px 0">Cambia precios aquí o usa el 👁️ para ocultar. Para cambios definitivos en todos los usuarios, edita el código en GitHub.</p>
         </div>
         <h3>🧸 Catálogo de Peluches</h3>
         <div class="products-grid" id="catalog"></div>
@@ -82,18 +78,31 @@
 </div>
 
 <script>
-    let catalogo = JSON.parse(localStorage.getItem('vibras_master_db')) || [
-        {id: 1, n: "CAPIBARA CERDITO.jpg", t: "Capibara Cerdito", p: 110000, h: false},
-        {id: 2, n: "CAPIBARA TIBURON.jpg", t: "Capibara Tiburón", p: 110000, h: false},
-        {id: 3, n: "DINOSAURIO AZUL.jpg", t: "Dinosaurio Azul", p: 95000, h: false},
-        {id: 4, n: "POKEMON FUEGO.jpg", t: "Pokémon Fuego", p: 85000, h: false},
-        {id: 5, n: "POKEMON PSYDUCK.jpg", t: "Pokémon Psyduck", p: 85000, h: false},
-        {id: 6, n: "TORO GRIS.jpg", t: "Toro Gris", p: 90000, h: false},
-        {id: 7, n: "CONEJITOMORADO.JPG", t: "Conejito Morado", p: 80000, h: false},
-        {id: 8, n: "GATO NEGRO.JPG", t: "Gato Negro", p: 85000, h: false},
-        {id: 9, n: "PERRITO.JPG", t: "Perrito Husky", p: 80000, h: false},
-        {id: 10, n: "UNICORNIO CELESTE.png", t: "Unicornio Celeste", p: 95000, h: false}
+    /**
+     * MARLE: Para cambiar el precio base a TODOS, cambia el valor de 'precioPorDefecto'
+     */
+    const precioPorDefecto = 100000;
+
+    const archivos = [
+        "CAPIBARA CERDITO.jpg", "CAPIBARA TIBURON.jpg", "DINOSAURIO AZUL.jpg",
+        "POKEMON FUEGO.jpg", "POKEMON PSYDUCK.jpg", "TORO GRIS.jpg",
+        "CONEJITOMORADO.JPG", "GATO NEGRO.JPG", "PERRITO.JPG", "UNICORNIO CELESTE.png"
     ];
+
+    // Carga base de datos local para cambios temporales o de ocultar
+    let catalogo = JSON.parse(localStorage.getItem('vibras_master_db')) || archivos.map((n, i) => ({
+        id: i + 1,
+        n: n,
+        t: n.split('.')[0],
+        p: precioPorDefecto,
+        h: false
+    }));
+
+    // Sincronizar precio si cambió en el código de GitHub
+    catalogo = catalogo.map(item => {
+        if (!localStorage.getItem('vibras_master_db')) item.p = precioPorDefecto;
+        return item;
+    });
 
     function updateClock() {
         const now = new Date();
@@ -106,13 +115,13 @@
         const c = document.getElementById('catalog');
         c.innerHTML = "";
         catalogo.forEach((item) => {
-            const src = item.n.startsWith('data:') ? item.n : `fotos/${item.n}`;
+            const src = `fotos/${item.n}`;
             c.innerHTML += `
                 <div class="product-card ${item.h ? 'hidden-item' : ''}">
                     <button class="btn-toggle" onclick="toggleItem(${item.id})">${item.h ? '❌' : '👁️'}</button>
                     <img src="${src}" alt="${item.t}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
                     <span class="product-name">${item.t}</span>
-                    <span class="price-display">$${item.p.toLocaleString()}</span>
+                    <span class="price-display">$${parseInt(item.p).toLocaleString()}</span>
                     <input type="number" class="admin-price-input" value="${item.p}" onchange="updatePrecio(${item.id}, this.value)">
                     <input type="number" class="qty-input" id="q_${item.id}" data-precio="${item.p}" value="0" min="0" oninput="actualizarResumen()">
                 </div>`;
@@ -141,20 +150,6 @@
         mostrar();
     }
 
-    function subirFotoLocal(e) {
-        const reader = new FileReader();
-        reader.onload = (ev) => {
-            const nom = prompt("Nombre del peluche:");
-            const pre = prompt("Precio:", "85000");
-            if(nom) {
-                catalogo.push({id: Date.now(), n: ev.target.result, t: nom, p: parseInt(pre), h: false});
-                localStorage.setItem('vibras_master_db', JSON.stringify(catalogo));
-                mostrar();
-            }
-        };
-        reader.readAsDataURL(e.target.files[0]);
-    }
-
     function actualizarResumen() {
         const res = document.getElementById('lista-resumen');
         let html = ""; let total = 0;
@@ -162,7 +157,7 @@
             const q = document.getElementById(`q_${item.id}`).value;
             if(q > 0 && !item.h) {
                 const sub = q * item.p;
-                html += `<div>• ${item.t}: ${q} x $${item.p.toLocaleString()} = <b>$${sub.toLocaleString()}</b></div>`;
+                html += `<div>• ${item.t}: ${q} x $${parseInt(item.p).toLocaleString()} = <b>$${sub.toLocaleString()}</b></div>`;
                 total += sub;
             }
         });
@@ -183,15 +178,15 @@
                 total += sub; hay = true;
             }
         });
-        if(!cli || !hay) return alert("Faltan datos.");
+        if(!cli || !hay) return alert("Faltan datos del cliente o productos.");
         txt += `------------------%0A*TOTAL: $${total.toLocaleString()}*`;
         window.open(`https://wa.me/3117700431?text=${txt}`, '_blank');
     }
 
     function exportarExcel() {
-        const cli = document.getElementById('cNombre').value;
+        const cli = document.getElementById('cNombre').value || "Cliente";
         let datos = [
-            ["VIBRAS POSITIVAS - NEGOCIO DE MARLE"],
+            ["✨ VIBRAS POSITIVAS - NEGOCIO DE MARLE ✨"],
             ["Fecha:", document.getElementById('live-clock').innerText],
             ["Cliente:", cli],
             ["Dirección:", document.getElementById('cDireccion').value],
@@ -203,7 +198,7 @@
             const q = document.getElementById(`q_${item.id}`).value;
             if(q > 0 && !item.h) {
                 const sub = q * item.p;
-                datos.push([item.t, q, item.p, sub]);
+                datos.push([item.t, q, parseInt(item.p), sub]);
                 total += sub;
             }
         });
@@ -213,7 +208,7 @@
         XLSX.utils.book_append_sheet(wb, ws, "Factura");
         XLSX.writeFile(wb, `Factura_${cli}.xlsx`);
     }
-    window.onload = mostrar;
+    window.onload = () => { updateClock(); mostrar(); };
 </script>
 </body>
 </html>
