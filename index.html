@@ -3,31 +3,26 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibras Positivas - Catálogo Completo</title>
+    <title>Vibras Positivas - Catálogo Marle</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --pink: #ff69b4; --green: #25d366; --gray: #7f8c8d; --bg: #fff5f8; }
+        :root { --pink: #ff69b4; --green: #25d366; --bg: #fff5f8; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .header { background: var(--pink); color: white; padding: 15px; text-align: center; }
-        #live-clock { font-size: 0.85em; margin-top: 5px; font-weight: 300; }
+        #live-clock { font-size: 0.85em; margin-top: 5px; }
         .section { padding: 15px; border-bottom: 1px solid #eee; }
-        h3 { margin: 0 0 10px 0; color: var(--pink); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
         input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
-        #searchBar { background-color: #fff0f5; border: 1px solid var(--pink); }
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; }
-        .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
-        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 5px 0; height: 32px; overflow: hidden; }
-        .qty-input { width: 60px !important; text-align: center; border: 1px solid var(--pink); border-radius: 5px; padding: 5px; }
+        .product-card img { width: 100%; height: 120px; object-fit: contain; border-radius: 10px; background: #f9f9f9; }
+        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 5px 0; height: 35px; }
+        .qty-input { width: 60px !important; text-align: center; border: 1px solid var(--pink); border-radius: 5px; }
         .actions { padding: 15px; display: grid; gap: 10px; }
         button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-wa { background: var(--green); }
         .btn-xl { background: #1d6f42; }
         .btn-add { background: #3498db; }
-        .btn-bk { background: var(--gray); }
-        .hidden-input { display: none; }
-        .history-list { font-size: 0.85em; background: #f9f9f9; padding: 10px; border-radius: 10px; max-height: 100px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -35,7 +30,7 @@
 <div class="app-container">
     <div class="header">
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
-        <div id="live-clock">🇨🇴 Cargando hora...</div>
+        <div id="live-clock">🇨🇴 Cargando hora de Colombia...</div>
     </div>
 
     <div class="section">
@@ -44,138 +39,87 @@
     </div>
 
     <div class="section">
-        <input type="text" id="searchBar" placeholder="🔍 Buscar por nombre..." onkeyup="filtrarCatalogo()">
-        <h3>🧸 Catálogo Completo 
-            <button class="btn-add" style="padding: 5px 10px; font-size: 0.6em;" onclick="document.getElementById('fileInput').click()">+ Nueva Referencia</button>
-        </h3>
-        <input type="file" id="fileInput" class="hidden-input" accept="image/*" onchange="subirNuevaFoto(event)">
+        <input type="text" id="searchBar" placeholder="🔍 Buscar peluche..." onkeyup="filtrar()">
+        <h3>🧸 Catálogo Completo <button class="btn-add" style="padding:4px 8px; font-size:0.6em; float:right" onclick="document.getElementById('fIn').click()">+ Nueva</button></h3>
+        <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subir(event)">
         <div class="products-grid" id="catalog"></div>
     </div>
 
-    <div class="section">
-        <h3>📜 Historial Pedidos</h3>
-        <div id="history" class="history-list">Sin pedidos hoy.</div>
-    </div>
-
     <div class="actions">
-        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar a WhatsApp 3117700431</button>
-        <button class="btn-xl" onclick="exportarExcel()">📊 Exportar Factura Excel</button>
-        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Cambios (Backup)</button>
+        <button class="btn-wa" onclick="enviar()">🟢 Enviar Factura WhatsApp</button>
+        <button class="btn-xl" onclick="excel()">📊 Exportar a Excel</button>
     </div>
 </div>
 
 <script>
-    // TODAS LAS FOTOS DE TUS IMÁGENES INTEGRADAS
+    // LISTA DE FOTOS FIJAS BASADAS EN TUS ARCHIVOS
     let catalogo = [
-        { id: 1, nombre: "Snoopy Corazón Rojo", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg" },
-        { id: 2, nombre: "Snoopy Camiseta Azul", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg" },
-        { id: 3, nombre: "Snoopy Camiseta Roja", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg" },
-        { id: 4, nombre: "Stitch Azul Clásico", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg" },
-        { id: 5, nombre: "Stitch Celeste Sonriente", img: "https://m.media-amazon.com/images/I/71m07YF6S2L._AC_SL1500_.jpg" },
-        { id: 6, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg" },
-        { id: 7, nombre: "Capibara con Gorro Fresa", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg" },
-        { id: 8, nombre: "Capibara con Gafas Piloto", img: "https://m.media-amazon.com/images/I/61X-jH4m8VL._AC_SL1500_.jpg" },
-        { id: 9, nombre: "Hello Kitty Vestido Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg" },
-        { id: 10, nombre: "Kuromi Falda Cuadros", img: "https://m.media-amazon.com/images/I/61qS+1U-LdL._AC_SL1500_.jpg" },
-        { id: 11, nombre: "Unicornio Azul Cobija", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg" },
-        { id: 12, nombre: "Unicornio Rosa Cobija", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg" },
-        { id: 13, nombre: "Rana Disfraz Negro", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg" },
-        { id: 14, nombre: "Tiburón Gris con Zapatos", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg" },
-        { id: 15, nombre: "Oso Panda Disfraz", img: "https://m.media-amazon.com/images/I/61qS+1U-LdL._AC_SL1500_.jpg" }
+        { id: 1, nombre: "Capibara Cerdito", img: "https://i.ibb.co/LhyM4p7/capibara-cerdito.jpg" },
+        { id: 2, nombre: "Capibara Tiburón", img: "https://i.ibb.co/SrtPZ0J/capibara-tiburon.jpg" },
+        { id: 3, nombre: "Dinosaurio Azul", img: "https://i.ibb.co/fndm7B1/dinosaurio-azul.jpg" },
+        { id: 4, nombre: "Charmander (Fuego)", img: "https://i.ibb.co/vYm6p60/pokemon-fuego.jpg" },
+        { id: 5, nombre: "Psyduck", img: "https://i.ibb.co/M9V6Y3C/pokemon-psyduck.jpg" },
+        { id: 6, nombre: "Toro Gris", img: "https://i.ibb.co/pLp0zQ0/toro-gris.jpg" },
+        { id: 7, nombre: "Conejito Morado", img: "https://i.ibb.co/Xz9Z0zV/conejito-morado.jpg" },
+        { id: 8, nombre: "Gato Negro", img: "https://i.ibb.co/q0V4Y4V/gato-negro.jpg" },
+        { id: 9, nombre: "Perrito Husky", img: "https://i.ibb.co/mS7Z0zV/perrito.jpg" },
+        { id: 10, nombre: "Unicornio Celeste", img: "https://i.ibb.co/Xz9Z0zV/unicornio-celeste.jpg" }
     ];
-
-    let historial = [];
 
     function updateClock() {
         const now = new Date();
-        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
-        document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', options);
+        const opt = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+        document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', opt);
     }
 
-    function cargarCatalogo(filtro = "") {
-        const container = document.getElementById('catalog');
-        container.innerHTML = "";
-        const productosFiltrados = catalogo.filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()));
-        productosFiltrados.forEach(p => {
-            container.innerHTML += `
-                <div class="product-card">
-                    <img src="${p.img}" alt="${p.nombre}">
-                    <span class="product-name">${p.nombre}</span>
-                    <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" placeholder="Cant">
-                </div>
-            `;
+    function mostrar(f = "") {
+        const c = document.getElementById('catalog');
+        c.innerHTML = "";
+        catalogo.filter(p => p.nombre.toLowerCase().includes(f.toLowerCase())).forEach(p => {
+            c.innerHTML += `<div class="product-card">
+                <img src="${p.img}" alt="${p.nombre}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
+                <span class="product-name">${p.nombre}</span>
+                <input type="number" class="qty-input" id="q_${p.id}" value="0" min="0">
+            </div>`;
         });
     }
 
-    function filtrarCatalogo() {
-        cargarCatalogo(document.getElementById('searchBar').value);
+    function filtrar() { mostrar(document.getElementById('searchBar').value); }
+
+    function subir(e) {
+        const r = new FileReader();
+        r.onload = function(ev) {
+            const n = prompt("Nombre del peluche:");
+            if(n) { catalogo.push({id: Date.now(), nombre: n, img: ev.target.result}); mostrar(); }
+        };
+        r.readAsDataURL(e.target.files[0]);
     }
 
-    function subirNuevaFoto(event) {
-        const file = event.target.files[0];
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            const nombre = prompt("Nombre del peluche:");
-            if (nombre) {
-                catalogo.push({ id: Date.now(), nombre: nombre, img: e.target.result });
-                cargarCatalogo();
-            }
-        }
-        reader.readAsDataURL(file);
-    }
-
-    function enviarWhatsApp() {
-        const cliente = document.getElementById('cNombre').value;
-        const info = document.getElementById('cDireccion').value;
-        let pedidoTxt = "";
-        let hayPedido = false;
-
+    function enviar() {
+        const cli = document.getElementById('cNombre').value;
+        let txt = `*✨ VIBRAS POSITIVAS ✨*%0A*Cliente:* ${cli}%0A------------------%0A`;
+        let hay = false;
         catalogo.forEach(p => {
-            const cant = document.getElementById(`cant_${p.id}`).value;
-            if (cant > 0) {
-                pedidoTxt += `• ${p.nombre} (Cantidad: ${cant})%0A`;
-                hayPedido = true;
-            }
+            const q = document.getElementById(`q_${p.id}`).value;
+            if(q > 0) { txt += `• ${p.nombre} (x${q})%0A`; hay = true; }
         });
-
-        if (!cliente || !hayPedido) return alert("Ingresa el cliente y al menos una cantidad.");
-
-        historial.unshift({ hora: new Date().toLocaleTimeString(), cliente });
-        actualizarHistorial();
-
-        const msj = `*✨ VIBRAS POSITIVAS - PEDIDO ✨*%0A*Fecha:* ${document.getElementById('live-clock').innerText}%0A%0A*CLIENTE:* ${cliente}%0A*INFO:* ${info}%0A------------------%0A*PRODUCTOS:*%0A${pedidoTxt}------------------%0A_Factura Marle_`;
-        window.open(`https://wa.me/3117700431?text=${msj}`, '_blank');
+        if(!cli || !hay) return alert("Llena los datos");
+        window.open(`https://wa.me/3117700431?text=${txt}`, '_blank');
     }
 
-    function actualizarHistorial() {
-        document.getElementById('history').innerHTML = historial.map(h => `<div><b>${h.hora}</b> - ${h.cliente}</div>`).join("");
-    }
-
-    function exportarExcel() {
-        let rows = [["Factura Marle"], ["Cliente", document.getElementById('cNombre').value], ["Producto", "Cantidad"]];
+    function excel() {
+        let d = [["Producto", "Cantidad"]];
         catalogo.forEach(p => {
-            const cant = document.getElementById(`cant_${p.id}`).value;
-            if (cant > 0) rows.push([p.nombre, cant]);
+            const q = document.getElementById(`q_${p.id}`).value;
+            if(q > 0) d.push([p.nombre, q]);
         });
-        const ws = XLSX.utils.aoa_to_sheet(rows);
+        const ws = XLSX.utils.aoa_to_sheet(d);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Pedido");
-        XLSX.writeFile(wb, "Factura_Marle.xlsx");
+        XLSX.writeFile(wb, "Pedido_Marle.xlsx");
     }
 
-    function hacerBackup() {
-        localStorage.setItem('catalogo_marle_v2', JSON.stringify(catalogo));
-        alert("¡Todo guardado! El catálogo está actualizado.");
-    }
-
-    window.onload = () => {
-        const guardado = localStorage.getItem('catalogo_marle_v2');
-        if (guardado) catalogo = JSON.parse(guardado);
-        cargarCatalogo();
-        setInterval(updateClock, 1000);
-        updateClock();
-    };
+    window.onload = () => { mostrar(); setInterval(updateClock, 1000); updateClock(); };
 </script>
-
 </body>
 </html>
