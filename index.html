@@ -3,45 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibras Positivas - App Marle</title>
+    <title>Vibras Positivas - Haz tu Pedido</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --pink: #ff69b4; --green: #25d366; --red: #e74c3c; --bg: #fff5f8; }
+        :root { --pink: #ff69b4; --green: #25d366; --bg: #fff5f8; --admin: #5d6d7e; }
         body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
         .header { background: var(--pink); color: white; padding: 15px; text-align: center; }
         .section { padding: 15px; border-bottom: 1px solid #eee; }
+        h3 { margin: 0 0 10px 0; color: var(--pink); font-size: 1.1em; }
         input { padding: 12px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; position: relative; }
-        .product-card img { width: 100%; height: 130px; object-fit: contain; border-radius: 10px; background: #fdfdfd; }
-        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 8px 0; height: 35px; color: #555; }
+        .product-card img { width: 100%; height: 120px; object-fit: contain; border-radius: 10px; }
+        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 8px 0; height: 35px; overflow: hidden; }
         .qty-input { width: 70px !important; text-align: center; border: 2px solid #ffe1ed; border-radius: 8px; padding: 5px; font-weight: bold; }
+        
+        /* Estilos Admin */
+        .admin-only { display: none; background: #f4f6f7; padding: 10px; border-radius: 10px; margin-top: 10px; border: 1px solid #ccc; }
+        .hidden-item { display: none; } /* El cliente no los ve */
+        .admin-view .hidden-item { display: block; opacity: 0.5; filter: grayscale(1); }
+        .btn-toggle { position: absolute; top: 5px; right: 5px; background: white; border: 1px solid #ddd; border-radius: 50%; width: 28px; height: 28px; cursor: pointer; }
+
+        .resumen-box { background: #fffef0; padding: 10px; border-radius: 10px; border: 1px solid #f1c40f; margin-top: 10px; }
         .actions { padding: 15px; display: grid; gap: 10px; }
         button { padding: 14px; border: none; border-radius: 15px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
-        .btn-wa { background: var(--green); }
-        .btn-xl { background: #1d6f42; }
+        .btn-wa { background: var(--green); font-size: 1.1em; }
+        .btn-admin { background: var(--admin); font-size: 0.8em; margin-top: 20px; }
     </style>
 </head>
 <body>
-<div class="app-container">
+<div class="app-container" id="mainApp">
     <div class="header">
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
-        <div id="live-clock">🇨🇴 Armenia, Colombia</div>
+        <div style="font-size: 0.8em;">Catálogo de Peluches & Cobijas</div>
     </div>
+
     <div class="section">
-        <input type="text" id="cNombre" placeholder="Nombre del Cliente">
-        <input type="text" id="cDireccion" placeholder="Dirección, Barrio y Celular">
+        <h3>👤 Tus Datos para el Envío</h3>
+        <input type="text" id="cNombre" placeholder="Tu Nombre">
+        <input type="text" id="cDireccion" placeholder="Dirección y Barrio">
+        <input type="tel" id="cCelular" placeholder="Tu Celular">
     </div>
+
     <div class="section">
-        <h3>🧸 Catálogo Marle</h3>
+        <h3>🧸 Elige tus Favoritos</h3>
         <div class="products-grid" id="catalog"></div>
     </div>
+
+    <div class="section">
+        <h3>📝 Tu Pedido</h3>
+        <div id="lista-resumen" class="resumen-box">Aún no has elegido nada.</div>
+    </div>
+
     <div class="actions">
-        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura a WhatsApp</button>
-        <button class="btn-xl" onclick="exportarExcel()">📊 Descargar Excel (Factura)</button>
+        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Pedir por WhatsApp</button>
+        <button class="btn-admin" onclick="toggleAdminPanel()">⚙️ Panel de Marle (Solo Administrador)</button>
+        
+        <div id="adminPanel" class="admin-only">
+            <h4>Panel de Control</h4>
+            <button style="background:#3498db; margin-bottom:10px" onclick="document.getElementById('fIn').click()">+ Subir Nueva Foto</button>
+            <input type="file" id="fIn" style="display:none" accept="image/*" onchange="subirFotoLocal(event)">
+            <p style="font-size:0.7em">Toca los ojos 👁️ en las fotos para ocultar productos del catálogo.</p>
+        </div>
     </div>
 </div>
+
 <script>
     const archivos = [
         "CAPIBARA CERDITO.jpg", "CAPIBARA TIBURON.jpg", "DINOSAURIO AZUL.jpg",
@@ -49,42 +76,98 @@
         "CONEJITOMORADO.JPG", "GATO NEGRO.JPG", "PERRITO.JPG", "UNICORNIO CELESTE.png"
     ];
 
+    let desactivados = JSON.parse(localStorage.getItem('marle_desactivados')) || [];
+    let catalogoExtra = JSON.parse(localStorage.getItem('marle_extra')) || [];
+    let isAdmin = false;
+
     function mostrar() {
         const c = document.getElementById('catalog');
         c.innerHTML = "";
+        
+        // Cargar fotos de GitHub
         archivos.forEach((nombre, i) => {
-            c.innerHTML += `
-                <div class="product-card">
-                    <img src="fotos/${nombre}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/150?text=Cargando...'">
-                    <span class="product-name">${nombre.split('.')[0]}</span>
-                    <input type="number" class="qty-input" id="q_${i}" value="0" min="0">
-                </div>`;
+            crearCard(c, `fotos/${nombre}`, nombre.split('.')[0], `f_${i}`, nombre);
         });
+
+        // Cargar extras
+        catalogoExtra.forEach((p, i) => {
+            crearCard(c, p.img, p.nombre, `e_${i}`, p.nombre);
+        });
+        actualizarResumen();
+    }
+
+    function crearCard(contenedor, src, nombre, id, refNombre) {
+        const isHidden = desactivados.includes(refNombre);
+        contenedor.innerHTML += `
+            <div class="product-card ${isHidden ? 'hidden-item' : ''}">
+                <button class="btn-toggle admin-only" onclick="toggleItem('${refNombre}')" style="display:${isAdmin?'flex':'none'}">
+                    ${isHidden ? '❌' : '👁️'}
+                </button>
+                <img src="${src}" alt="${nombre}" onerror="this.src='https://via.placeholder.com/150?text=Peluche'">
+                <span class="product-name">${nombre}</span>
+                <input type="number" class="qty-input" id="q_${id}" value="0" min="0" oninput="actualizarResumen()">
+            </div>`;
+    }
+
+    function toggleAdminPanel() {
+        isAdmin = !isAdmin;
+        document.getElementById('adminPanel').style.display = isAdmin ? 'block' : 'none';
+        document.getElementById('mainApp').classList.toggle('admin-view', isAdmin);
+        mostrar();
+    }
+
+    function toggleItem(nombre) {
+        if (desactivados.includes(nombre)) {
+            desactivados = desactivados.filter(n => n !== nombre);
+        } else {
+            desactivados.push(nombre);
+        }
+        localStorage.setItem('marle_desactivados', JSON.stringify(desactivados));
+        mostrar();
+    }
+
+    function subirFotoLocal(e) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+            const n = prompt("Nombre del peluche:");
+            if(n) {
+                catalogoExtra.push({ nombre: n, img: event.target.result });
+                localStorage.setItem('marle_extra', JSON.stringify(catalogoExtra));
+                mostrar();
+            }
+        };
+        reader.readAsDataURL(e.target.files[0]);
+    }
+
+    function actualizarResumen() {
+        const resumen = document.getElementById('lista-resumen');
+        let html = "";
+        let hayAlgo = false;
+        document.querySelectorAll('.qty-input').forEach(input => {
+            if(input.value > 0) {
+                const nombre = input.previousElementSibling.innerText;
+                html += `<div>• ${nombre}: <b>${input.value}</b></div>`;
+                hayAlgo = true;
+            }
+        });
+        resumen.innerHTML = hayAlgo ? html : "Aún no has elegido nada.";
     }
 
     function enviarWhatsApp() {
         const cli = document.getElementById('cNombre').value;
-        let txt = `*✨ VIBRAS POSITIVAS ✨*%0A*Cliente:* ${cli}%0A------------------%0A`;
+        const dir = document.getElementById('cDireccion').value;
+        let txt = `*✨ PEDIDO VIBRAS POSITIVAS ✨*%0A*Nombre:* ${cli}%0A*Dirección:* ${dir}%0A------------------%0A`;
         let hay = false;
-        archivos.forEach((nombre, i) => {
-            const q = document.getElementById(`q_${i}`).value;
-            if(q > 0) { txt += `• ${nombre.split('.')[0]} (x${q})%0A`; hay = true; }
+        document.querySelectorAll('.qty-input').forEach(input => {
+            if(input.value > 0) {
+                txt += `• ${input.previousElementSibling.innerText} (x${input.value})%0A`;
+                hay = true;
+            }
         });
-        if(!cli || !hay) return alert("Faltan datos.");
+        if(!cli || !hay) return alert("Por favor escribe tu nombre y elige algún peluche.");
         window.open(`https://wa.me/3117700431?text=${txt}`, '_blank');
     }
 
-    function exportarExcel() {
-        let d = [["Producto", "Cantidad"]];
-        archivos.forEach((nombre, i) => {
-            const q = document.getElementById(`q_${i}`).value;
-            if(q > 0) d.push([nombre.split('.')[0], q]);
-        });
-        const ws = XLSX.utils.aoa_to_sheet(d);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pedido");
-        XLSX.writeFile(wb, "Factura_Marle.xlsx");
-    }
     window.onload = mostrar;
 </script>
 </body>
