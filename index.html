@@ -3,37 +3,31 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vibras Positivas - Gestión de Ventas</title>
+    <title>Vibras Positivas - Catálogo Completo</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        :root { --primary: #ff69b4; --secondary: #25d366; --accent: #3498db; --bg: #fff5f8; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; color: #333; }
+        :root { --pink: #ff69b4; --green: #25d366; --gray: #7f8c8d; --bg: #fff5f8; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; padding: 10px; }
         .app-container { max-width: 500px; margin: auto; background: white; border-radius: 25px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
-        
-        .header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        .header { background: var(--pink); color: white; padding: 15px; text-align: center; }
         #live-clock { font-size: 0.85em; margin-top: 5px; font-weight: 300; }
-
         .section { padding: 15px; border-bottom: 1px solid #eee; }
-        h3 { margin: 0 0 10px 0; color: var(--primary); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
-        
-        .client-grid input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
-
+        h3 { margin: 0 0 10px 0; color: var(--pink); font-size: 1.1em; display: flex; justify-content: space-between; align-items: center; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 10px; margin-bottom: 8px; width: 100%; box-sizing: border-box; }
+        #searchBar { background-color: #fff0f5; border: 1px solid var(--pink); }
         .products-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
         .product-card { background: #fff; border: 1px solid #ffe1ed; border-radius: 15px; padding: 10px; text-align: center; }
         .product-card img { width: 100%; height: 110px; object-fit: cover; border-radius: 10px; }
-        
-        .price-input { width: 85px !important; text-align: center; color: #27ae60; font-weight: bold; border: 1px solid #ddd; border-radius: 5px; padding: 4px; }
-        .qty-input { width: 45px !important; text-align: center; border: 1px solid var(--primary); border-radius: 5px; padding: 4px; }
-
-        /* Historial */
-        .history-list { font-size: 0.85em; max-height: 200px; overflow-y: auto; background: #fdfdfd; padding: 10px; border-radius: 10px; border: 1px solid #eee; }
-        .history-item { border-bottom: 1px solid #eee; padding: 5px 0; }
-
+        .product-name { font-size: 0.85em; font-weight: bold; display: block; margin: 5px 0; height: 32px; overflow: hidden; }
+        .qty-input { width: 60px !important; text-align: center; border: 1px solid var(--pink); border-radius: 5px; padding: 5px; }
         .actions { padding: 15px; display: grid; gap: 10px; }
-        button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 0.95em; }
-        .btn-wa { background: var(--secondary); }
+        button { padding: 12px; border: none; border-radius: 12px; color: white; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-wa { background: var(--green); }
         .btn-xl { background: #1d6f42; }
-        .btn-bk { background: #7f8c8d; }
+        .btn-add { background: #3498db; }
+        .btn-bk { background: var(--gray); }
+        .hidden-input { display: none; }
+        .history-list { font-size: 0.85em; background: #f9f9f9; padding: 10px; border-radius: 10px; max-height: 100px; overflow-y: auto; }
     </style>
 </head>
 <body>
@@ -41,143 +35,142 @@
 <div class="app-container">
     <div class="header">
         <h2 style="margin:0">✨ Vibras Positivas ✨</h2>
-        <div id="live-clock">Cargando hora...</div>
+        <div id="live-clock">🇨🇴 Cargando hora...</div>
     </div>
 
     <div class="section">
-        <h3>👤 Datos del Cliente</h3>
-        <div class="client-grid">
-            <input type="text" id="cNombre" placeholder="Nombre completo">
-            <input type="text" id="cDireccion" placeholder="Dirección y Barrio">
-            <input type="tel" id="cCelular" placeholder="Celular / WhatsApp">
-        </div>
+        <input type="text" id="cNombre" placeholder="Nombre del Cliente">
+        <input type="text" id="cDireccion" placeholder="Dirección y Celular">
     </div>
 
     <div class="section">
-        <h3>🧸 Editar Precios y Pedido</h3>
+        <input type="text" id="searchBar" placeholder="🔍 Buscar por nombre..." onkeyup="filtrarCatalogo()">
+        <h3>🧸 Catálogo Completo 
+            <button class="btn-add" style="padding: 5px 10px; font-size: 0.6em;" onclick="document.getElementById('fileInput').click()">+ Nueva Referencia</button>
+        </h3>
+        <input type="file" id="fileInput" class="hidden-input" accept="image/*" onchange="subirNuevaFoto(event)">
         <div class="products-grid" id="catalog"></div>
     </div>
 
     <div class="section">
-        <h3>📜 Historial de Pedidos Hoy</h3>
-        <div id="history" class="history-list">Aún no hay pedidos...</div>
+        <h3>📜 Historial Pedidos</h3>
+        <div id="history" class="history-list">Sin pedidos hoy.</div>
     </div>
 
     <div class="actions">
-        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar Factura WhatsApp</button>
-        <button class="btn-xl" onclick="exportarExcel()">📊 Generar Factura Excel</button>
-        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Precios (Backup)</button>
+        <button class="btn-wa" onclick="enviarWhatsApp()">🟢 Enviar a WhatsApp 3117700431</button>
+        <button class="btn-xl" onclick="exportarExcel()">📊 Exportar Factura Excel</button>
+        <button class="btn-bk" onclick="hacerBackup()">💾 Guardar Cambios (Backup)</button>
     </div>
 </div>
 
 <script>
-    let productos = [
-        { id: 1, nombre: "Snoopy Corazón", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg", precio: 85000 },
-        { id: 2, nombre: "Stitch Azul", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg", precio: 95000 },
-        { id: 3, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg", precio: 78000 },
-        { id: 4, nombre: "Hello Kitty Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg", precio: 85000 }
+    // TODAS LAS FOTOS DE TUS IMÁGENES INTEGRADAS
+    let catalogo = [
+        { id: 1, nombre: "Snoopy Corazón Rojo", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg" },
+        { id: 2, nombre: "Snoopy Camiseta Azul", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg" },
+        { id: 3, nombre: "Snoopy Camiseta Roja", img: "https://m.media-amazon.com/images/I/71YFv7J0L-L._AC_SL1500_.jpg" },
+        { id: 4, nombre: "Stitch Azul Clásico", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg" },
+        { id: 5, nombre: "Stitch Celeste Sonriente", img: "https://m.media-amazon.com/images/I/71m07YF6S2L._AC_SL1500_.jpg" },
+        { id: 6, nombre: "Capibara Graduado", img: "https://m.media-amazon.com/images/I/61z-uD79TfL._AC_SL1500_.jpg" },
+        { id: 7, nombre: "Capibara con Gorro Fresa", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg" },
+        { id: 8, nombre: "Capibara con Gafas Piloto", img: "https://m.media-amazon.com/images/I/61X-jH4m8VL._AC_SL1500_.jpg" },
+        { id: 9, nombre: "Hello Kitty Vestido Rosa", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg" },
+        { id: 10, nombre: "Kuromi Falda Cuadros", img: "https://m.media-amazon.com/images/I/61qS+1U-LdL._AC_SL1500_.jpg" },
+        { id: 11, nombre: "Unicornio Azul Cobija", img: "https://m.media-amazon.com/images/I/61NAs2u+VVL._AC_SL1000_.jpg" },
+        { id: 12, nombre: "Unicornio Rosa Cobija", img: "https://m.media-amazon.com/images/I/51GvC0Yp79L._AC_SL1000_.jpg" },
+        { id: 13, nombre: "Rana Disfraz Negro", img: "https://m.media-amazon.com/images/I/61G7h5W3YkL._AC_SL1200_.jpg" },
+        { id: 14, nombre: "Tiburón Gris con Zapatos", img: "https://m.media-amazon.com/images/I/61S8YgTzDUL._AC_SL1500_.jpg" },
+        { id: 15, nombre: "Oso Panda Disfraz", img: "https://m.media-amazon.com/images/I/61qS+1U-LdL._AC_SL1500_.jpg" }
     ];
 
     let historial = [];
 
     function updateClock() {
         const now = new Date();
-        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
+        const options = { timeZone: 'America/Bogota', hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit', day: '2-digit', month: '2-digit', year: 'numeric' };
         document.getElementById('live-clock').innerHTML = "🇨🇴 " + now.toLocaleString('es-CO', options);
     }
 
-    function cargarCatalogo() {
+    function cargarCatalogo(filtro = "") {
         const container = document.getElementById('catalog');
         container.innerHTML = "";
-        productos.forEach(p => {
+        const productosFiltrados = catalogo.filter(p => p.nombre.toLowerCase().includes(filtro.toLowerCase()));
+        productosFiltrados.forEach(p => {
             container.innerHTML += `
                 <div class="product-card">
                     <img src="${p.img}" alt="${p.nombre}">
-                    <div style="font-size:0.8em; font-weight:bold;">${p.nombre}</div>
-                    <div style="margin-top:5px;">
-                        <input type="number" class="price-input" id="val_${p.id}" value="${p.precio}" title="Editar Precio">
-                        <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" title="Cantidad">
-                    </div>
+                    <span class="product-name">${p.nombre}</span>
+                    <input type="number" class="qty-input" id="cant_${p.id}" value="0" min="0" placeholder="Cant">
                 </div>
             `;
         });
     }
 
+    function filtrarCatalogo() {
+        cargarCatalogo(document.getElementById('searchBar').value);
+    }
+
+    function subirNuevaFoto(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const nombre = prompt("Nombre del peluche:");
+            if (nombre) {
+                catalogo.push({ id: Date.now(), nombre: nombre, img: e.target.result });
+                cargarCatalogo();
+            }
+        }
+        reader.readAsDataURL(file);
+    }
+
     function enviarWhatsApp() {
         const cliente = document.getElementById('cNombre').value;
-        const dir = document.getElementById('cDireccion').value;
-        let total = 0;
+        const info = document.getElementById('cDireccion').value;
         let pedidoTxt = "";
+        let hayPedido = false;
 
-        productos.forEach(p => {
+        catalogo.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
-            const precio = document.getElementById(`val_${p.id}`).value;
             if (cant > 0) {
-                const sub = cant * precio;
-                pedidoTxt += `- ${p.nombre} (x${cant}) $${sub.toLocaleString()}%0A`;
-                total += sub;
+                pedidoTxt += `• ${p.nombre} (Cantidad: ${cant})%0A`;
+                hayPedido = true;
             }
         });
 
-        if (!cliente || total === 0) return alert("Completa los datos del cliente y el pedido.");
+        if (!cliente || !hayPedido) return alert("Ingresa el cliente y al menos una cantidad.");
 
-        // Guardar en historial
-        historial.unshift({ fecha: new Date().toLocaleTimeString(), cliente, total });
+        historial.unshift({ hora: new Date().toLocaleTimeString(), cliente });
         actualizarHistorial();
 
-        const msj = `*✨ VIBRAS POSITIVAS - FACTURA ✨*%0A*Cliente:* ${cliente}%0A*Dirección:* ${dir}%0A------------------%0A${pedidoTxt}*TOTAL: $${total.toLocaleString()}*%0A------------------%0A_¡Gracias!_`;
+        const msj = `*✨ VIBRAS POSITIVAS - PEDIDO ✨*%0A*Fecha:* ${document.getElementById('live-clock').innerText}%0A%0A*CLIENTE:* ${cliente}%0A*INFO:* ${info}%0A------------------%0A*PRODUCTOS:*%0A${pedidoTxt}------------------%0A_Factura Marle_`;
         window.open(`https://wa.me/3117700431?text=${msj}`, '_blank');
     }
 
     function actualizarHistorial() {
-        const hDiv = document.getElementById('history');
-        hDiv.innerHTML = historial.map(h => `<div class="history-item"><b>${h.fecha}</b> - ${h.cliente}: $${h.total.toLocaleString()}</div>`).join("");
+        document.getElementById('history').innerHTML = historial.map(h => `<div><b>${h.hora}</b> - ${h.cliente}</div>`).join("");
     }
 
     function exportarExcel() {
-        const cliente = document.getElementById('cNombre').value || "Cliente General";
-        const fecha = new Date().toLocaleDateString();
-        
-        let datosFactura = [
-            ["✨ VIBRAS POSITIVAS - FACTURA ✨"],
-            ["Fecha:", fecha],
-            ["Cliente:", cliente],
-            ["Dirección:", document.getElementById('cDireccion').value],
-            [],
-            ["Producto", "Cantidad", "Precio Unit.", "Subtotal"]
-        ];
-
-        let totalFinal = 0;
-        productos.forEach(p => {
+        let rows = [["Factura Marle"], ["Cliente", document.getElementById('cNombre').value], ["Producto", "Cantidad"]];
+        catalogo.forEach(p => {
             const cant = document.getElementById(`cant_${p.id}`).value;
-            const precio = document.getElementById(`val_${p.id}`).value;
-            if (cant > 0) {
-                const sub = cant * precio;
-                datosFactura.push([p.nombre, cant, precio, sub]);
-                totalFinal += sub;
-            }
+            if (cant > 0) rows.push([p.nombre, cant]);
         });
-
-        datosFactura.push([], ["", "", "TOTAL:", totalFinal]);
-
-        const ws = XLSX.utils.aoa_to_sheet(datosFactura);
+        const ws = XLSX.utils.aoa_to_sheet(rows);
         const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Factura");
-        XLSX.writeFile(wb, `Factura_${cliente}_${fecha}.xlsx`);
+        XLSX.utils.book_append_sheet(wb, ws, "Pedido");
+        XLSX.writeFile(wb, "Factura_Marle.xlsx");
     }
 
     function hacerBackup() {
-        // Guardar los precios actuales en la memoria del navegador
-        productos.forEach(p => {
-            p.precio = document.getElementById(`val_${p.id}`).value;
-        });
-        localStorage.setItem('vibras_precios', JSON.stringify(productos));
-        alert("¡Precios guardados correctamente!");
+        localStorage.setItem('catalogo_marle_v2', JSON.stringify(catalogo));
+        alert("¡Todo guardado! El catálogo está actualizado.");
     }
 
     window.onload = () => {
-        const saved = localStorage.getItem('vibras_precios');
-        if(saved) productos = JSON.parse(saved);
+        const guardado = localStorage.getItem('catalogo_marle_v2');
+        if (guardado) catalogo = JSON.parse(guardado);
         cargarCatalogo();
         setInterval(updateClock, 1000);
         updateClock();
